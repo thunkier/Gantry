@@ -1,0 +1,14 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:docking="clr-namespace:Gantry.UI.Shell.Docking"
+             xmlns:vm="clr-namespace:Gantry.UI.Shell.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="Gantry.UI.Shell.Docking.DockableWorkspace"
+             x:DataType="docking:DockLayoutViewModel"
+             x:CompileBindings="True">
+    
+    <docking:DockPaneView DataContext="{Binding RootPane}" 
+                          TabDetachRequested="OnTabDetachRequested" />
+</UserControl>

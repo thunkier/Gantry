@@ -1,0 +1,82 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Gantry.UI.Features.NodeEditor.ViewModels"
+             xmlns:views="clr-namespace:Gantry.UI.Features.NodeEditor.Views"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="Gantry.UI.Features.NodeEditor.Views.NodeEditorView"
+             x:DataType="vm:NodeEditorViewModel"
+             DragDrop.AllowDrop="True">
+
+    <UserControl.Styles>
+        <Style Selector="#NodesList Canvas > ContentPresenter">
+            <Setter Property="Canvas.Left" Value="{Binding X, DataType=vm:NodeViewModel}" />
+            <Setter Property="Canvas.Top" Value="{Binding Y, DataType=vm:NodeViewModel}" />
+        </Style>
+    </UserControl.Styles>
+
+  <Grid>
+    <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="10" ZIndex="100">
+        <Button Command="{Binding RunGraphCommand}" Content="Run Graph" Background="Green" Foreground="White" />
+    </StackPanel>
+
+    <Panel Background="#1E1E1E" Name="CanvasPanel" ClipToBounds="True">
+        <!-- Context Menu on outer panel -->
+        <Panel.ContextMenu>
+            <ContextMenu>
+                <MenuItem Header="Add Request..." Command="{Binding AddRequestCommand}" />
+            </ContextMenu>
+        </Panel.ContextMenu>
+        
+        <!-- Grid Background -->
+        <views:GridBackgroundControl 
+            GridSize="20"
+            ZoomScale="{Binding ZoomScale}"
+            PanX="{Binding PanX}"
+            PanY="{Binding PanY}" />
+        
+        <!-- Canvas content with zoom/pan transform -->
+        <Panel Name="TransformPanel" Background="Transparent">
+            <Panel.RenderTransform>
+                <TransformGroup>
+                    <ScaleTransform ScaleX="{Binding ZoomScale}" ScaleY="{Binding ZoomScale}" />
+                    <TranslateTransform X="{Binding PanX}" Y="{Binding PanY}" />
+                </TransformGroup>
+            </Panel.RenderTransform>
+
+            <ItemsControl ItemsSource="{Binding Connections}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate><Canvas /></ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Line StartPoint="{Binding Source.Anchor}"
+                              EndPoint="{Binding Target.Anchor}"
+                              Stroke="White" StrokeThickness="2" />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <ItemsControl x:Name="NodesList" ItemsSource="{Binding Nodes}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate><Canvas /></ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <views:NodeView />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+            <Line IsVisible="{Binding PendingConnectionSource, Converter={x:Static ObjectConverters.IsNotNull}}"
+                  StartPoint="{Binding PendingStartPoint}"
+                  EndPoint="{Binding MousePosition}"
+                  Stroke="Gray"
+                  StrokeThickness="2"
+                  StrokeDashArray="2,2"
+                  IsHitTestVisible="False" />
+        </Panel>
+    </Panel>
+  </Grid>
+</UserControl>

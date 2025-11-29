@@ -1,0 +1,51 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:Gantry.UI.Shell.ViewModels;assembly=Gantry.UI"
+        xmlns:requestsvm="clr-namespace:Gantry.UI.Features.Requests.ViewModels;assembly=Gantry.UI"
+        xmlns:collectionsvm="clr-namespace:Gantry.UI.Features.Collections.ViewModels;assembly=Gantry.UI"
+        xmlns:shell="clr-namespace:Gantry.UI.Shell.Views;assembly=Gantry.UI"
+        xmlns:docking="clr-namespace:Gantry.UI.Shell.Docking;assembly=Gantry.UI"
+        xmlns:requests="clr-namespace:Gantry.UI.Features.Requests.Views;assembly=Gantry.UI"
+        xmlns:collections="clr-namespace:Gantry.UI.Features.Collections.Views;assembly=Gantry.UI"
+        xmlns:nodeEditor="clr-namespace:Gantry.UI.Features.NodeEditor.Views;assembly=Gantry.UI"
+        xmlns:workspace="clr-namespace:Gantry.UI.Features.Workspaces.Views;assembly=Gantry.UI"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+        x:Class="Gantry.Desktop.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Title="Gantry"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaTitleBarHeightHint="-1">
+    
+    <Window.Resources>
+        <DataTemplate x:Key="RequestTabTemplate" DataType="requestsvm:RequestViewModel">
+            <requests:RequestView />
+        </DataTemplate>
+        <DataTemplate x:Key="CollectionTabTemplate" DataType="collectionsvm:CollectionTabViewModel">
+            <collections:CollectionTabView />
+        </DataTemplate>
+        <DataTemplate x:Key="NodeEditorTabTemplate" DataType="vm:NodeEditorTabViewModel">
+            <nodeEditor:NodeEditorView DataContext="{Binding NodeEditor}" />
+        </DataTemplate>
+    </Window.Resources>
+    
+    <Grid RowDefinitions="Auto, *">
+        <shell:TitleBar Grid.Row="0" DataContext="{Binding TitleBar}" />
+        
+        <Grid Grid.Row="1" ColumnDefinitions="Auto, *">
+            
+            <shell:Sidebar Grid.Column="0" DataContext="{Binding Sidebar}" />
+            
+            <Grid Grid.Column="1">
+                <docking:DockableWorkspace x:Name="DockableWorkspace"
+                                            DataContext="{Binding DockLayout}"
+                                            TabDetachRequested="OnTabDetachRequested" 
+                                            IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CurrentWorkspace, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                
+                <workspace:WelcomeView DataContext="{Binding Welcome}"
+                                       IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CurrentWorkspace, Converter={x:Static ObjectConverters.IsNull}}" />
+            </Grid>
+        </Grid>
+    </Grid>
+</Window>

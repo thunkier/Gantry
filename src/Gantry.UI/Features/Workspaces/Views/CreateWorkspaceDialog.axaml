@@ -1,0 +1,24 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:views="clr-namespace:Gantry.UI.Features.Workspaces.Views"
+        mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="200"
+        x:Class="Gantry.UI.Features.Workspaces.Views.CreateWorkspaceDialog"
+        x:DataType="views:CreateWorkspaceDialog"
+        Title="Create Workspace"
+        Width="400" Height="200" WindowStartupLocation="CenterOwner">
+  <Grid RowDefinitions="*, Auto" Margin="20">
+    <StackPanel Spacing="15">
+        <TextBlock Text="Create New Workspace" FontSize="18" FontWeight="Bold" />
+        <TextBlock Text="Enter a name for the new workspace:" />
+        
+        <TextBox Name="NameTextBox" Watermark="Workspace Name" />
+    </StackPanel>
+
+    <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right">
+        <Button Content="Cancel" Click="OnCancelClick" />
+        <Button Content="Create" Click="OnCreateClick" Classes="accent" />
+    </StackPanel>
+  </Grid>
+</Window>

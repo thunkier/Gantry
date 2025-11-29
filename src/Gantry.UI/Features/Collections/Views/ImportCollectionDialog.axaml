@@ -1,0 +1,37 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:Gantry.UI.Features.Collections.ViewModels"
+        mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="250"
+        x:Class="Gantry.UI.Features.Collections.Views.ImportCollectionDialog"
+        x:DataType="vm:ImportCollectionDialogViewModel"
+        Title="Import Collection"
+        Width="400" Height="250"
+        WindowStartupLocation="CenterOwner"
+        SystemDecorations="Full">
+
+    <Grid RowDefinitions="Auto, *, Auto" Margin="20">
+        <TextBlock Grid.Row="0" Text="Import Collection" FontSize="18" FontWeight="Bold" Margin="0,0,0,20" />
+
+        <StackPanel Grid.Row="1" Spacing="15">
+            <StackPanel Spacing="5">
+                <TextBlock Text="Import Type" FontWeight="SemiBold" />
+                <ComboBox ItemsSource="{Binding ImportTypes}" SelectedItem="{Binding SelectedType}" HorizontalAlignment="Stretch" />
+            </StackPanel>
+
+            <StackPanel Spacing="5">
+                <TextBlock Text="File Path" FontWeight="SemiBold" />
+                <Grid ColumnDefinitions="*, Auto">
+                    <TextBox Grid.Column="0" Text="{Binding FilePath}" Margin="0,0,5,0" />
+                    <Button Grid.Column="1" Command="{Binding BrowseFileCommand}" Content="..." />
+                </Grid>
+            </StackPanel>
+        </StackPanel>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right" Margin="0,20,0,0">
+            <Button Content="Cancel" Click="OnCancelClick" />
+            <Button Content="Import" Click="OnImportClick" Classes="accent" />
+        </StackPanel>
+    </Grid>
+</Window>

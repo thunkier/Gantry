@@ -1,0 +1,229 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Gantry.UI.Features.Requests.ViewModels"
+             xmlns:ui="clr-namespace:Gantry.UI"
+             xmlns:cv="clr-namespace:Gantry.UI.Common.Converters"
+             xmlns:ae="clr-namespace:AvaloniaEdit;assembly=AvaloniaEdit"
+             xmlns:views="clr-namespace:Gantry.UI.Features.Requests.Views"
+             xmlns:adc="clr-namespace:Avalonia.Data.Converters;assembly=Avalonia.Base"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             x:Class="Gantry.UI.Features.Requests.Views.RequestView"
+             x:DataType="vm:RequestViewModel"
+             x:Name="Root">
+
+  <UserControl.DataTemplates>
+      <DataTemplate DataType="{x:Type vm:ResponseViewModel}">
+          <views:ResponseView />
+      </DataTemplate>
+  </UserControl.DataTemplates>
+
+  <UserControl.Resources>
+      <cv:EnumEqualityConverter x:Key="EnumEqualityConverter" />
+      <cv:BoolToBrushConverter x:Key="BoolToBrushConverter" />
+  </UserControl.Resources>
+
+  <UserControl.KeyBindings>
+      <KeyBinding Gesture="Ctrl+S" Command="{Binding SaveCommand}" />
+  </UserControl.KeyBindings>
+
+  <Grid RowDefinitions="Auto, *, 5, *">
+    <!-- Top Bar: Method, URL, Send -->
+    <Grid Grid.Row="0" ColumnDefinitions="Auto, *, Auto" Margin="10">
+      <ComboBox Grid.Column="0" ItemsSource="{Binding Methods}" SelectedItem="{Binding SelectedMethod}" MinWidth="100" />
+      <ae:TextEditor Grid.Column="1" 
+                     Name="UrlEditor"
+                     Document="{Binding Url, Converter={x:Static cv:StringToTextDocumentConverter.Instance}}" 
+                     Margin="10,0" 
+                     Height="26"
+                     FontFamily="Cascadia Code,Consolas,Monospace"
+                     ShowLineNumbers="False"
+                     VerticalScrollBarVisibility="Hidden"
+                     HorizontalScrollBarVisibility="Hidden" />
+      <Button Grid.Column="2" Command="{Binding SendRequestCommand}" Content="Send" IsEnabled="{Binding !IsLoading}" />
+    </Grid>
+
+    <!-- Tabs for Request Details -->
+    <TabControl Grid.Row="1" Margin="10,0,10,0">
+      <TabItem Header="Params">
+        <DataGrid ItemsSource="{Binding Params}" AutoGenerateColumns="False">
+            <DataGrid.Columns>
+                <DataGridCheckBoxColumn Header="Active" Binding="{Binding IsActive}"/>
+                <DataGridTextColumn Header="Key" Binding="{Binding Key}"/>
+                <DataGridTextColumn Header="Value" Binding="{Binding Value}"/>
+                <DataGridTextColumn Header="Description" Binding="{Binding Description}"/>
+            </DataGrid.Columns>
+        </DataGrid>
+      </TabItem>
+      
+      <TabItem Header="Authorization">
+          <StackPanel Spacing="10" Margin="10" MaxWidth="600" HorizontalAlignment="Left">
+              <TextBlock Text="Type" FontWeight="Bold" />
+              <ComboBox ItemsSource="{Binding AuthTypes}" SelectedItem="{Binding Auth.Type}" MinWidth="200" />
+              
+              <!-- Inherit -->
+              <TextBlock Text="Inheriting authorization from parent collection." 
+                         IsVisible="{Binding Auth.Type, Converter={StaticResource EnumEqualityConverter}, ConverterParameter=Inherit}"
+                         FontStyle="Italic" Opacity="0.7" />
+
+              <!-- Bearer Token -->
+              <StackPanel IsVisible="{Binding Auth.Type, Converter={StaticResource EnumEqualityConverter}, ConverterParameter=BearerToken}" Spacing="5">
+                  <TextBlock Text="Token" />
+                  <TextBox Text="{Binding Auth.Token}" PasswordChar="●" />
+              </StackPanel>
+              
+              <!-- Basic Auth -->
+              <StackPanel IsVisible="{Binding Auth.Type, Converter={StaticResource EnumEqualityConverter}, ConverterParameter=Basic}" Spacing="5">
+                  <TextBlock Text="Username" />
+                  <TextBox Text="{Binding Auth.Username}" />
+                  <TextBlock Text="Password" />
+                  <TextBox Text="{Binding Auth.Password}" PasswordChar="●" />
+              </StackPanel>
+          </StackPanel>
+      </TabItem>
+      
+      <TabItem Header="Headers">
+        <DataGrid ItemsSource="{Binding Headers}" AutoGenerateColumns="False">
+            <DataGrid.Columns>
+                <DataGridCheckBoxColumn Header="Active" Binding="{Binding IsActive}"/>
+                <DataGridTextColumn Header="Key" Binding="{Binding Key}"/>
+                <DataGridTextColumn Header="Value" Binding="{Binding Value}"/>
+                <DataGridTextColumn Header="Description" Binding="{Binding Description}"/>
+            </DataGrid.Columns>
+        </DataGrid>
+      </TabItem>
+      
+      <TabItem Header="Body">
+        <ae:TextEditor Document="{Binding Body, Converter={x:Static cv:StringToTextDocumentConverter.Instance}}" 
+                       ShowLineNumbers="True"
+                       FontFamily="Cascadia Code,Consolas,Monospace" />
+      </TabItem>
+      
+      <TabItem Header="Scripts">
+          <Grid RowDefinitions="*, *" ColumnDefinitions="*, *" Margin="10">
+              <Grid Grid.Row="0" Grid.Column="0" RowDefinitions="Auto, *" Margin="0,0,5,5">
+                  <TextBlock Text="Pre-request Script" FontWeight="Bold" Margin="0,0,0,5" />
+                  <TextBox Text="{Binding Scripts.PreRequestScript}" AcceptsReturn="True" FontFamily="Consolas,Courier New,monospace" />
+              </Grid>
+              <Grid Grid.Row="0" Grid.Column="1" RowDefinitions="Auto, *" Margin="5,0,0,5">
+                  <TextBlock Text="Post-response Script" FontWeight="Bold" Margin="0,0,0,5" />
+                  <TextBox Text="{Binding Scripts.PostResponseScript}" AcceptsReturn="True" FontFamily="Consolas,Courier New,monospace" />
+              </Grid>
+          </Grid>
+      </TabItem>
+      
+      <TabItem Header="Settings">
+          <ScrollViewer>
+              <StackPanel Spacing="20" Margin="10" MaxWidth="700">
+                  <!-- HTTP Version -->
+                  <StackPanel Spacing="5">
+                      <TextBlock Text="HTTP Version" FontWeight="Bold"/>
+                      <TextBlock Text="Select the HTTP version to use for sending the request." TextWrapping="Wrap" Opacity="0.7" FontSize="12"/>
+                      <ComboBox ItemsSource="{Binding HttpVersions}" SelectedItem="{Binding HttpVersion}" MinWidth="150"/>
+                  </StackPanel>
+
+                  <Separator Background="#33FFFFFF"/>
+
+                  <!-- SSL Certificate Verification -->
+                  <StackPanel Spacing="5">
+                      <CheckBox IsChecked="{Binding EnableSslCertificateVerification}" Content="Enable SSL certificate verification"/>
+                      <TextBlock Text="Verify SSL certificates when sending a request. Verification failures will result in the request being aborted." 
+                                 TextWrapping="Wrap" Opacity="0.7" FontSize="12" Margin="28,0,0,0"/>
+                  </StackPanel>
+
+                  <Separator Background="#33FFFFFF"/>
+
+                  <!-- Redirect Settings -->
+                  <StackPanel Spacing="10">
+                      <TextBlock Text="Redirect Behavior" FontWeight="Bold"/>
+                      
+                      <CheckBox IsChecked="{Binding AutomaticallyFollowRedirects}" Content="Automatically follow redirects"/>
+                      <TextBlock Text="Follow HTTP 3xx responses as redirects." 
+                                 TextWrapping="Wrap" Opacity="0.7" FontSize="12" Margin="28,0,0,0"/>
+
+                      <CheckBox IsChecked="{Binding FollowOriginalHttpMethod}" Content="Follow original HTTP Method" 
+                                IsEnabled="{Binding AutomaticallyFollowRedirects}"/>
+                      <TextBlock Text="Redirect with the original HTTP method instead of the default behavior of redirecting with GET." 
+                                 TextWrapping="Wrap" Opacity="0.7" FontSize="12" Margin="28,0,0,0"/>
+
+                      <CheckBox IsChecked="{Binding FollowAuthorizationHeader}" Content="Follow Authorization header"
+                                IsEnabled="{Binding AutomaticallyFollowRedirects}"/>
+                      <TextBlock Text="Retain authorization header when a redirect happens to a different hostname." 
+                                 TextWrapping="Wrap" Opacity="0.7" FontSize="12" Margin="28,0,0,0"/>
+
+                      <CheckBox IsChecked="{Binding RemoveRefererHeaderOnRedirect}" Content="Remove referer header on redirect"
+                                IsEnabled="{Binding AutomaticallyFollowRedirects}"/>
+                      <TextBlock Text="Remove the referer header when a redirect happens." 
+                                 TextWrapping="Wrap" Opacity="0.7" FontSize="12" Margin="28,0,0,0"/>
+
+                      <StackPanel Spacing="5" IsEnabled="{Binding AutomaticallyFollowRedirects}">
+                          <TextBlock Text="Maximum number of redirects"/>
+                          <NumericUpDown Value="{Binding MaximumNumberOfRedirects}" Minimum="0" Maximum="50" Increment="1" FormatString="0"/>
+                          <TextBlock Text="Set a cap on the maximum number of redirects to follow." 
+                                     TextWrapping="Wrap" Opacity="0.7" FontSize="12"/>
+                      </StackPanel>
+                  </StackPanel>
+
+                  <Separator Background="#33FFFFFF"/>
+
+                  <!-- HTTP Parser and Encoding -->
+                  <StackPanel Spacing="10">
+                      <TextBlock Text="HTTP Parser and Encoding" FontWeight="Bold"/>
+                      
+                      <CheckBox IsChecked="{Binding EnableStrictHttpParser}" Content="Enable strict HTTP parser"/>
+                      <TextBlock Text="Restrict responses with invalid HTTP headers." 
+                                 TextWrapping="Wrap" Opacity="0.7" FontSize="12" Margin="28,0,0,0"/>
+
+                      <CheckBox IsChecked="{Binding EncodeUrlAutomatically}" Content="Encode URL automatically"/>
+                      <TextBlock Text="Encode the URL's path, query parameters, and authentication fields." 
+                                 TextWrapping="Wrap" Opacity="0.7" FontSize="12" Margin="28,0,0,0"/>
+                  </StackPanel>
+
+                  <Separator Background="#33FFFFFF"/>
+
+                  <!-- Cookie Settings -->
+                  <StackPanel Spacing="5">
+                      <CheckBox IsChecked="{Binding DisableCookieJar}" Content="Disable cookie jar"/>
+                      <TextBlock Text="Prevent cookies used in this request from being stored in the cookie jar. Existing cookies in the cookie jar will not be added as headers for this request." 
+                                 TextWrapping="Wrap" Opacity="0.7" FontSize="12" Margin="28,0,0,0"/>
+                  </StackPanel>
+
+                  <Separator Background="#33FFFFFF"/>
+
+                  <!-- TLS/SSL Settings -->
+                  <StackPanel Spacing="10">
+                      <TextBlock Text="TLS/SSL Settings" FontWeight="Bold"/>
+                      
+                      <CheckBox IsChecked="{Binding UseServerCipherSuiteDuringHandshake}" Content="Use server cipher suite during handshake"/>
+                      <TextBlock Text="Use the server's cipher suite order instead of the client's during handshake." 
+                                 TextWrapping="Wrap" Opacity="0.7" FontSize="12" Margin="28,0,0,0"/>
+
+                      <TextBlock Text="TLS/SSL protocols" Margin="0,10,0,5"/>
+                      <TextBlock Text="Specify which SSL and TLS protocol versions to enable/disable during handshake." 
+                                 TextWrapping="Wrap" Opacity="0.7" FontSize="12" Margin="0,0,0,5"/>
+                      <ItemsControl ItemsSource="{Binding AvailableTlsProtocols}">
+                          <ItemsControl.ItemTemplate>
+                              <DataTemplate>
+                                  <CheckBox IsChecked="{Binding IsEnabled}" Content="{Binding Name}" Margin="0,2"/>
+                              </DataTemplate>
+                          </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+
+                      <TextBlock Text="Cipher suite selection" Margin="0,10,0,5"/>
+                      <TextBlock Text="Order of cipher suites that the SSL server profile uses to establish a secure connection." 
+                                 TextWrapping="Wrap" Opacity="0.7" FontSize="12" Margin="0,0,0,5"/>
+                      <ComboBox ItemsSource="{Binding CipherSuites}" SelectedItem="{Binding CipherSuiteSelection}" MinWidth="200"/>
+                  </StackPanel>
+              </StackPanel>
+          </ScrollViewer>
+      </TabItem>
+    </TabControl>
+
+    <!-- Splitter -->
+    <GridSplitter Grid.Row="2" Background="Gray" ResizeDirection="Rows" IsVisible="{Binding Response, Converter={x:Static adc:ObjectConverters.IsNotNull}}" />
+
+    <!-- Response View -->
+    <ContentControl Grid.Row="3" Content="{Binding Response}" Margin="10,0,10,10" />
+  </Grid>
+</UserControl>

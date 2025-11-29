@@ -1,0 +1,28 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="200"
+        x:Class="Gantry.UI.Features.Workspaces.Views.GitCloneDialog"
+        Title="Import from Git"
+        Width="500" Height="200"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False">
+  <Grid RowDefinitions="*, Auto" Margin="20">
+    <StackPanel Grid.Row="0" Spacing="15">
+      <TextBlock Text="Clone Git Repository" FontSize="18" FontWeight="Bold"/>
+      <TextBlock Text="Enter the Git repository URL (GitHub, GitLab, or any Git URL):" 
+                 TextWrapping="Wrap" Opacity="0.7"/>
+      <TextBox x:Name="GitUrlTextBox" 
+               Watermark="https://github.com/username/repository.git"
+               FontSize="14"/>
+      <TextBlock Text="The repository will be cloned to your Gantry workspaces folder." 
+                 FontSize="12" Opacity="0.5" TextWrapping="Wrap"/>
+    </StackPanel>
+
+    <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+      <Button Content="Cancel" Width="100" Click="OnCancelClick"/>
+      <Button Content="Clone" Width="100" Click="OnCloneClick" Classes="accent"/>
+    </StackPanel>
+  </Grid>
+</Window>

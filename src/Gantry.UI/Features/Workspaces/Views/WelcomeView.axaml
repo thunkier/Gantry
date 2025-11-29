@@ -1,0 +1,88 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Gantry.UI.Features.Workspaces.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="Gantry.UI.Features.Workspaces.Views.WelcomeView"
+             x:DataType="vm:WelcomeViewModel">
+    
+    <Grid Background="{DynamicResource SystemControlBackgroundAltHighBrush}">
+        <!-- Central Content -->
+        <StackPanel VerticalAlignment="Center" 
+                    HorizontalAlignment="Center"
+                    MaxWidth="400"
+                    Spacing="20">
+            
+            <!-- Welcome Title -->
+            <TextBlock Text="Welcome to Gantry"
+                       FontSize="32"
+                       FontWeight="SemiBold"
+                       HorizontalAlignment="Center"
+                       Margin="0,0,0,20" />
+            
+            <!-- Action Buttons -->
+            <StackPanel Spacing="12">
+                <Button Content="Open Folder"
+                        Command="{Binding OpenFolderCommand}"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Center"
+                        Height="48"
+                        FontSize="16"
+                        Classes="accent" />
+                
+                <Button Content="Clone Git Repository"
+                        Command="{Binding CloneGitCommand}"
+                        HorizontalAlignment="Stretch"
+                        HorizontalContentAlignment="Center"
+                        Height="48"
+                        FontSize="16" />
+            </StackPanel>
+            
+            <!-- Recent Workspaces -->
+            <StackPanel Spacing="12" 
+                        Margin="0,20,0,0"
+                        IsVisible="{Binding HasRecentWorkspaces}">
+                
+                <TextBlock Text="Recent Workspaces"
+                           FontSize="14"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                
+                <!-- Recent Workspace List -->
+                <ItemsControl ItemsSource="{Binding RecentWorkspaces}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate DataType="vm:RecentWorkspace">
+                            <Button Command="{Binding $parent[UserControl].((vm:WelcomeViewModel)DataContext).OpenRecentWorkspaceCommand}"
+                                    CommandParameter="{Binding}"
+                                    HorizontalAlignment="Stretch"
+                                    HorizontalContentAlignment="Left"
+                                    Padding="16,12"
+                                    Margin="0,4"
+                                    Classes="transparent">
+                                <StackPanel Spacing="4">
+                                    <TextBlock Text="{Binding Name}"
+                                               FontSize="14"
+                                               FontWeight="Medium" />
+                                    <TextBlock Text="{Binding Path}"
+                                               FontSize="11"
+                                               Foreground="{DynamicResource SystemControlForegroundBaseMediumBrush}" />
+                                </StackPanel>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                
+                <!-- Show More Button -->
+                <Button Content="Show more..."
+                        Command="{Binding ShowMoreWorkspacesCommand}"
+                        HorizontalAlignment="Center"
+                        Classes="transparent"
+                        FontSize="12"
+                        Margin="0,8,0,0" />
+            </StackPanel>
+            
+        </StackPanel>
+    </Grid>
+    
+</UserControl>

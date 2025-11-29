@@ -1,0 +1,39 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:Gantry.UI.Shell.ViewModels"
+        xmlns:requestsvm="clr-namespace:Gantry.UI.Features.Requests.ViewModels"
+        xmlns:collectionsvm="clr-namespace:Gantry.UI.Features.Collections.ViewModels"
+        xmlns:requests="clr-namespace:Gantry.UI.Features.Requests.Views"
+        xmlns:collections="clr-namespace:Gantry.UI.Features.Collections.Views"
+        xmlns:nodeEditor="clr-namespace:Gantry.UI.Features.NodeEditor.Views"
+        mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+        x:Class="Gantry.UI.Shell.DetachedTabWindow"
+        x:DataType="vm:TabViewModel"
+        Title="{Binding Title}"
+        Width="900" Height="600">
+    
+    <Grid RowDefinitions="Auto,*">
+        <!-- Titlebar with Re-dock button -->
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}" Height="32">
+            <TextBlock Grid.Column="0" Text="{Binding Title}" VerticalAlignment="Center" Margin="10,0" />
+            <Button Grid.Column="1" Content="⮌ Re-dock" Click="RedockButton_Click" Margin="5,2" />
+        </Grid>
+        
+        <!-- Tab Content -->
+        <ContentControl Grid.Row="1" Content="{Binding}">
+            <ContentControl.DataTemplates>
+                <DataTemplate DataType="requestsvm:RequestViewModel">
+                    <requests:RequestView />
+                </DataTemplate>
+                <DataTemplate DataType="collectionsvm:CollectionTabViewModel">
+                    <collections:CollectionTabView />
+                </DataTemplate>
+                <DataTemplate DataType="vm:NodeEditorTabViewModel">
+                    <nodeEditor:NodeEditorView DataContext="{Binding NodeEditor}" />
+                </DataTemplate>
+            </ContentControl.DataTemplates>
+        </ContentControl>
+    </Grid>
+</Window>

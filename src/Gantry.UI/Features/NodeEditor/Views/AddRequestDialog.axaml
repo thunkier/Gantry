@@ -1,0 +1,32 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:Gantry.UI.Features.NodeEditor.ViewModels"
+        mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="450"
+        x:Class="Gantry.UI.Features.NodeEditor.Views.AddRequestDialog"
+        x:DataType="vm:AddRequestDialogViewModel"
+        Title="Add Request"
+        Width="400" Height="450"
+        WindowStartupLocation="CenterOwner">
+
+    <Grid RowDefinitions="Auto, *, Auto" Margin="10">
+        <TextBox Grid.Row="0" Text="{Binding SearchQuery}" Watermark="Search requests..." Margin="0,0,0,10"/>
+
+        <ListBox Grid.Row="1" ItemsSource="{Binding FilteredRequests}" SelectedItem="{Binding SelectedRequest}" Background="Transparent">
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Spacing="2">
+                        <TextBlock Text="{Binding Name}" FontWeight="Bold"/>
+                        <TextBlock Text="{Binding Request.Url}" FontSize="10" Opacity="0.7"/>
+                    </StackPanel>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,10,0,0">
+            <Button Content="Cancel" Click="OnCancelClick"/>
+            <Button Content="Add" Click="OnAddClick" IsEnabled="{Binding SelectedRequest, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+        </StackPanel>
+    </Grid>
+</Window>

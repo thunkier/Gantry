@@ -1,0 +1,175 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:docking="clr-namespace:Gantry.UI.Shell.Docking"
+             xmlns:vm="clr-namespace:Gantry.UI.Shell.ViewModels"
+             xmlns:requestsvm="clr-namespace:Gantry.UI.Features.Requests.ViewModels"
+             xmlns:collectionsvm="clr-namespace:Gantry.UI.Features.Collections.ViewModels"
+             xmlns:requests="clr-namespace:Gantry.UI.Features.Requests.Views"
+             xmlns:collections="clr-namespace:Gantry.UI.Features.Collections.Views"
+             xmlns:nodeEditor="clr-namespace:Gantry.UI.Features.NodeEditor.Views"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="600"
+             x:Class="Gantry.UI.Shell.Docking.DockPaneView"
+             x:DataType="docking:DockPaneViewModel"
+             x:CompileBindings="True">
+    
+    <!-- Two modes: Leaf (shows tabs) or Split (shows child panes) -->
+    <Grid>
+        <!-- LEAF MODE: Show tabs -->
+        <Grid RowDefinitions="Auto,*" IsVisible="{Binding IsLeaf}">
+            <!-- Tab Headers -->
+            <Border Grid.Row="0" 
+                    Background="#2D2D30" 
+                    BorderThickness="0,0,0,1" 
+                    BorderBrush="#3E3E42">
+                <ListBox x:Name="TabListBox"
+                         ItemsSource="{Binding Tabs}" 
+                         SelectedItem="{Binding ActiveTab}" 
+                         Background="Transparent"
+                         BorderThickness="0"
+                         Padding="0">
+                    <ListBox.Styles>
+                        <Style Selector="ListBoxItem">
+                            <Setter Property="Padding" Value="0" />
+                            <Setter Property="Margin" Value="0" />
+                            <Setter Property="Background" Value="Transparent" />
+                            <Setter Property="BorderThickness" Value="0" />
+                        </Style>
+                        <Style Selector="ListBoxItem:selected">
+                            <Setter Property="Background" Value="#1E1E1E" />
+                        </Style>
+                        <Style Selector="ListBoxItem:pointerover">
+                            <Setter Property="Background" Value="#2A2D2E" />
+                        </Style>
+                        <Style Selector="ListBoxItem:selected:pointerover">
+                            <Setter Property="Background" Value="#1E1E1E" />
+                        </Style>
+                    </ListBox.Styles>
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="vm:TabViewModel">
+                            <Border Background="Transparent"
+                                    BorderThickness="0,0,1,0"
+                                    BorderBrush="#3E3E42"
+                                    Padding="12,8"
+                                    PointerPressed="TabItem_PointerPressed"
+                                    PointerMoved="TabItem_PointerMoved"
+                                    PointerReleased="TabItem_PointerReleased">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <TextBlock Text="{Binding Title}" 
+                                               VerticalAlignment="Center"
+                                               Foreground="#CCCCCC"
+                                               FontSize="13" />
+                                    <Button Command="{Binding CloseCommand}" 
+                                            Background="Transparent"
+                                            BorderThickness="0"
+                                            Padding="4"
+                                            Width="20"
+                                            Height="20"
+                                            CornerRadius="3"
+                                            ToolTip.Tip="Close">
+                                        <Button.Styles>
+                                            <Style Selector="Button:pointerover">
+                                                <Setter Property="Background" Value="#3E3E42" />
+                                            </Style>
+                                            <Style Selector="Button:pressed">
+                                                <Setter Property="Background" Value="#4E4E52" />
+                                            </Style>
+                                        </Button.Styles>
+                                        <PathIcon Data="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"
+                                                  Width="10"
+                                                  Height="10"
+                                                  Foreground="#858585" />
+                                    </Button>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </Border>
+
+            <!-- Tab Content -->
+            <ContentControl Grid.Row="1" 
+                            Content="{Binding ActiveTab}"
+                            Background="#1E1E1E">
+                <ContentControl.DataTemplates>
+                    <DataTemplate DataType="requestsvm:RequestViewModel">
+                        <requests:RequestView />
+                    </DataTemplate>
+                    <DataTemplate DataType="collectionsvm:CollectionTabViewModel">
+                        <collections:CollectionTabView />
+                    </DataTemplate>
+                    <DataTemplate DataType="vm:NodeEditorTabViewModel">
+                        <nodeEditor:NodeEditorView DataContext="{Binding NodeEditor}" />
+                    </DataTemplate>
+                </ContentControl.DataTemplates>
+            </ContentControl>
+        </Grid>
+
+        <!-- SPLIT MODE: Show two child panes with splitter -->
+        <Panel IsVisible="{Binding !IsLeaf}">
+            <!-- Horizontal split: top/bottom -->
+            <Grid RowDefinitions="*,1,*" IsVisible="{Binding Orientation, Converter={x:Static docking:DockPaneView.IsHorizontal}}">
+                <ContentControl Grid.Row="0" Content="{Binding FirstChild}">
+                    <ContentControl.DataTemplates>
+                        <DataTemplate DataType="docking:DockPaneViewModel">
+                            <docking:DockPaneView TabDetachRequested="OnChildTabDetachRequested" />
+                        </DataTemplate>
+                    </ContentControl.DataTemplates>
+                </ContentControl>
+                
+                <GridSplitter Grid.Row="1" 
+                              Background="#3E3E42"
+                              ResizeDirection="Rows">
+                    <GridSplitter.Styles>
+                        <Style Selector="GridSplitter:pointerover">
+                            <Setter Property="Background" Value="#007ACC" />
+                        </Style>
+                    </GridSplitter.Styles>
+                </GridSplitter>
+                
+                <ContentControl Grid.Row="2" Content="{Binding SecondChild}">
+                    <ContentControl.DataTemplates>
+                        <DataTemplate DataType="docking:DockPaneViewModel">
+                            <docking:DockPaneView TabDetachRequested="OnChildTabDetachRequested" />
+                        </DataTemplate>
+                    </ContentControl.DataTemplates>
+                </ContentControl>
+            </Grid>
+
+            <!-- Vertical split: left/right -->
+            <Grid ColumnDefinitions="*,1,*" IsVisible="{Binding Orientation, Converter={x:Static docking:DockPaneView.IsVertical}}">
+                <ContentControl Grid.Column="0" Content="{Binding FirstChild}">
+                    <ContentControl.DataTemplates>
+                        <DataTemplate DataType="docking:DockPaneViewModel">
+                            <docking:DockPaneView TabDetachRequested="OnChildTabDetachRequested" />
+                        </DataTemplate>
+                    </ContentControl.DataTemplates>
+                </ContentControl>
+                
+                <GridSplitter Grid.Column="1" 
+                              Background="#3E3E42"
+                              ResizeDirection="Columns">
+                    <GridSplitter.Styles>
+                        <Style Selector="GridSplitter:pointerover">
+                            <Setter Property="Background" Value="#007ACC" />
+                        </Style>
+                    </GridSplitter.Styles>
+                </GridSplitter>
+                
+                <ContentControl Grid.Column="2" Content="{Binding SecondChild}">
+                    <ContentControl.DataTemplates>
+                        <DataTemplate DataType="docking:DockPaneViewModel">
+                            <docking:DockPaneView TabDetachRequested="OnChildTabDetachRequested" />
+                        </DataTemplate>
+                    </ContentControl.DataTemplates>
+                </ContentControl>
+            </Grid>
+        </Panel>
+    </Grid>
+</UserControl>

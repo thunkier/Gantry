@@ -1,0 +1,38 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Gantry.UI.Shell.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="40"
+             x:Class="Gantry.UI.Shell.Views.TitleBar"
+             x:DataType="vm:TitleBarViewModel">
+  <Grid ColumnDefinitions="Auto, Auto, *, Auto, Auto" Background="{DynamicResource SystemControlBackgroundChromeMediumLowBrush}" PointerPressed="OnTitleBarPointerPressed">
+    <Panel Grid.Column="0" x:Name="MacSpacer" Width="0" />
+
+    <Menu Grid.Column="1" Margin="10,0" VerticalAlignment="Center">
+      <MenuItem Header="File">
+        <MenuItem Header="New Workspace" Command="{Binding CreateWorkspaceCommand}" />
+        <MenuItem Header="New Window" Command="{Binding NewWindowCommand}" />
+        <MenuItem Header="Open Folder..." Command="{Binding OpenFolderCommand}" />
+        <MenuItem Header="Import from Git..." Command="{Binding ImportFromGitCommand}" />
+      </MenuItem>
+    </Menu>
+
+    <Border Grid.Column="2" MaxWidth="400" Margin="10,5" CornerRadius="4" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}">
+      <Grid ColumnDefinitions="Auto, *">
+        <TextBlock Grid.Column="0" Text="🔍" VerticalAlignment="Center" Margin="8,0,0,0" Opacity="0.5"/>
+        <TextBox Grid.Column="1" Watermark="Search..." BorderThickness="0" Background="Transparent" VerticalAlignment="Center" />
+      </Grid>
+    </Border>
+
+    <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="5" Margin="10,0">
+      <Button Content="⚙" Background="Transparent" BorderThickness="0" Padding="8" />
+    </StackPanel>
+
+    <StackPanel Grid.Column="4" x:Name="WindowsCaptionButtons" Orientation="Horizontal" IsVisible="False">
+      <Button Content="_" Width="46" Height="32" Background="Transparent" BorderThickness="0" Click="OnMinimizeClick" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" />
+      <Button Content="☐" Width="46" Height="32" Background="Transparent" BorderThickness="0" Click="OnMaximizeClick" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" />
+      <Button Content="✕" Width="46" Height="32" Background="Transparent" BorderThickness="0" Click="OnCloseClick" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" />
+    </StackPanel>
+  </Grid>
+</UserControl>

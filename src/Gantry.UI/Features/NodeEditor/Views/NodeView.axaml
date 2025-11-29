@@ -1,0 +1,94 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:vm="clr-namespace:Gantry.UI.Features.NodeEditor.ViewModels"
+             mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="150"
+             x:Class="Gantry.UI.Features.NodeEditor.Views.NodeView"
+             Background="Transparent"
+             x:DataType="vm:NodeViewModel">
+  
+  <UserControl.RenderTransform>
+    <TranslateTransform X="{Binding X}" Y="{Binding Y}" />
+  </UserControl.RenderTransform>
+  
+  <!-- Outer border with selection highlighting -->
+  <Border Background="{Binding NodeColor}"
+          BorderThickness="2"
+          CornerRadius="5"
+          BoxShadow="0 4 10 0 #40000000"
+          MinWidth="180"
+          Name="OuterBorder">
+    <Border.Styles>
+      <Style Selector="Border">
+        <Setter Property="BorderBrush" Value="#3E3E3E"/>
+      </Style>
+    </Border.Styles>
+    
+    <StackPanel>
+        <!-- Header -->
+        <Border Background="#3E3E3E" CornerRadius="5,5,0,0" Padding="10,5" Name="HeaderBorder">
+            <Grid ColumnDefinitions="Auto,*">
+              <!-- Status indicator (left accent) -->
+              <Border Grid.Column="0" Width="4" Height="16" CornerRadius="2" Margin="0,0,8,0"
+                      Name="StatusIndicator" Background="#9E9E9E"/>
+              
+              <TextBlock Grid.Column="1" Text="{Binding Title}" FontWeight="Bold" Foreground="#E0E0E0" VerticalAlignment="Center"/>
+            </Grid>
+        </Border>
+
+        <!-- Body -->
+        <Border Padding="10">
+            <StackPanel Spacing="10">
+                <!-- Content -->
+                <ContentControl Content="{Binding}">
+                    <ContentControl.DataTemplates>
+                        <DataTemplate DataType="vm:RequestNodeViewModel">
+                            <StackPanel Spacing="5">
+                                <Border Background="#1E1E1E" CornerRadius="3" Padding="5">
+                                    <StackPanel Orientation="Horizontal" Spacing="5">
+                                        <TextBlock Text="{Binding RequestItem.Request.Method}" FontWeight="Bold" Foreground="{Binding MethodColor}" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding RequestItem.Request.Url}" FontSize="11" TextTrimming="CharacterEllipsis" MaxWidth="130" VerticalAlignment="Center" ToolTip.Tip="{Binding RequestItem.Request.Url}" Foreground="#B0B0B0"/>
+                                    </StackPanel>
+                                </Border>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ContentControl.DataTemplates>
+                </ContentControl>
+
+                <Grid ColumnDefinitions="*,*">
+                    <!-- Inputs -->
+                    <ItemsControl Grid.Column="0" ItemsSource="{Binding Inputs}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="vm:PinViewModel">
+                                <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4" Background="Transparent" ToolTip.Tip="{Binding Name}">
+                                    <!-- Interactive pin connector -->
+                                    <Border Background="Transparent" Padding="4" Name="PinConnector" Tag="{Binding}" Cursor="Hand">
+                                        <Ellipse Width="12" Height="12" Fill="{Binding Color}" Stroke="#2E7D32" StrokeThickness="2" />
+                                    </Border>
+                                    <TextBlock Text="{Binding Name}" FontSize="11" VerticalAlignment="Center" Foreground="#B0B0B0"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+
+                    <!-- Outputs -->
+                    <ItemsControl Grid.Column="1" ItemsSource="{Binding Outputs}" HorizontalAlignment="Right">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="vm:PinViewModel">
+                                <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,4" HorizontalAlignment="Right" Background="Transparent" ToolTip.Tip="{Binding Name}">
+                                    <TextBlock Text="{Binding Name}" FontSize="11" VerticalAlignment="Center" Foreground="#B0B0B0"/>
+                                    <!-- Interactive pin connector -->
+                                    <Border Background="Transparent" Padding="4" Name="PinConnector" Tag="{Binding}" Cursor="Hand">
+                                        <Ellipse Width="12" Height="12" Fill="{Binding Color}" Stroke="#1565C0" StrokeThickness="2" />
+                                    </Border>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Grid>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+  </Border>
+</UserControl>

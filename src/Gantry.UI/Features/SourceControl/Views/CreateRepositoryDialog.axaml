@@ -1,0 +1,25 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:views="clr-namespace:Gantry.UI.Features.SourceControl.Views"
+        mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="250"
+        x:Class="Gantry.UI.Features.SourceControl.Views.CreateRepositoryDialog"
+        x:DataType="views:CreateRepositoryDialog"
+        Title="Initialize Repository"
+        Width="400" Height="250" WindowStartupLocation="CenterOwner">
+  <Grid RowDefinitions="*, Auto" Margin="20">
+    <StackPanel Spacing="15">
+        <TextBlock Text="Initialize Git Repository" FontSize="18" FontWeight="Bold" />
+        <TextBlock Text="Create a new git repository in the current workspace." TextWrapping="Wrap" />
+        
+        <CheckBox Content="Create .gitignore (C# default)" IsChecked="{Binding CreateGitIgnore}" />
+        <CheckBox Content="Create README.md" IsChecked="{Binding CreateReadme}" />
+    </StackPanel>
+
+    <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="10" HorizontalAlignment="Right">
+        <Button Content="Cancel" Click="OnCancelClick" />
+        <Button Content="Initialize" Click="OnInitializeClick" Classes="accent" />
+    </StackPanel>
+  </Grid>
+</Window>
