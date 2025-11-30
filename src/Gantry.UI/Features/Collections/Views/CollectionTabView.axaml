@@ -3,7 +3,9 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:vm="clr-namespace:Gantry.UI.Features.Collections.ViewModels"
+             xmlns:rvm="clr-namespace:Gantry.UI.Features.Requests.ViewModels"
              xmlns:cv="clr-namespace:Gantry.UI.Common.Converters"
+             xmlns:ae="clr-namespace:AvaloniaEdit;assembly=AvaloniaEdit"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="Gantry.UI.Features.Collections.Views.CollectionTabView"
              x:DataType="vm:CollectionTabViewModel"
@@ -37,10 +39,26 @@
                     
                     <!-- Basic Auth -->
                     <StackPanel IsVisible="{Binding Collection.Auth.Type, Converter={StaticResource EnumEqualityConverter}, ConverterParameter=Basic}" Spacing="5">
-                        <TextBlock Text="Username" />
-                        <TextBox Text="{Binding Collection.Auth.Username}" />
-                        <TextBlock Text="Password" />
-                        <TextBox Text="{Binding Collection.Auth.Password}" PasswordChar="●" />
+                        <StackPanel DataContext="{Binding Collection.Auth}" x:DataType="rvm:AuthSettingsViewModel" Spacing="5">
+                            <TextBlock Text="Username" />
+                            <Border BorderBrush="Gray" BorderThickness="1" CornerRadius="3">
+                                <ae:TextEditor Document="{Binding Username, Converter={x:Static cv:StringToTextDocumentConverter.Instance}}" 
+                                               Height="20"
+                                               FontFamily="Cascadia Code,Consolas,Monospace"
+                                               ShowLineNumbers="False"
+                                               VerticalScrollBarVisibility="Hidden"
+                                               HorizontalScrollBarVisibility="Hidden" />
+                            </Border>
+                            <TextBlock Text="Password" />
+                            <Border BorderBrush="Gray" BorderThickness="1" CornerRadius="3">
+                                <ae:TextEditor Document="{Binding Password, Converter={x:Static cv:StringToTextDocumentConverter.Instance}}" 
+                                               Height="20"
+                                               FontFamily="Cascadia Code,Consolas,Monospace"
+                                               ShowLineNumbers="False"
+                                               VerticalScrollBarVisibility="Hidden"
+                                               HorizontalScrollBarVisibility="Hidden" />
+                            </Border>
+                        </StackPanel>
                     </StackPanel>
                     
                     <TextBlock Text="This authorization will be used by all requests in this collection unless overridden." 
@@ -72,7 +90,7 @@
                             <DataGridCheckBoxColumn Header="Enabled" Binding="{Binding Enabled}" Width="Auto" />
                             <DataGridTemplateColumn Width="Auto">
                                 <DataGridTemplateColumn.CellTemplate>
-                                    <DataTemplate>
+                                    <DataTemplate DataType="rvm:VariableViewModel">
                                         <Button Content="✕" Command="{Binding #Root.DataContext.Collection.RemoveVariableCommand}" CommandParameter="{Binding}" Background="Transparent" BorderThickness="0" Foreground="Red" />
                                     </DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>

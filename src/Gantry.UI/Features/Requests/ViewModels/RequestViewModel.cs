@@ -66,6 +66,15 @@ public partial class RequestViewModel : TabViewModel
 
         // Initialize collections
         foreach (var header in _model.Headers) Headers.Add(new HeaderViewModel(header));
+
+        // Add Auto Headers
+        AddAutoHeader("Host", "<calculated when request is sent>");
+        AddAutoHeader("User-Agent", "Gantry/1.0"); // Gantry User Agent
+        AddAutoHeader("Accept", "*/*");
+        AddAutoHeader("Accept-Encoding", "gzip, deflate, br");
+        AddAutoHeader("Connection", "keep-alive");
+        AddAutoHeader("Gantry-Token", "<calculated when request is sent>");
+
         // Add empty row
         Headers.Add(new HeaderViewModel(new HeaderItem()));
 
@@ -214,6 +223,26 @@ public partial class RequestViewModel : TabViewModel
 
     public ObservableCollection<HistoryItemViewModel> History { get; } = new();
 
+    [ObservableProperty]
+    private bool _isHistoryVisible = true;
+
+    [RelayCommand]
+    private void ToggleHistory()
+    {
+        IsHistoryVisible = !IsHistoryVisible;
+    }
+
+    [ObservableProperty]
+    private HistoryItemViewModel? _selectedHistoryItem;
+
+    partial void OnSelectedHistoryItemChanged(HistoryItemViewModel? value)
+    {
+        if (value != null)
+        {
+            Response = new ResponseViewModel(value.Model);
+        }
+    }
+
     [RelayCommand]
     private void Save()
     {
@@ -256,9 +285,9 @@ public partial class RequestViewModel : TabViewModel
                 Method = SelectedMethod,
                 Body = resolvedBody,
 
-                // Collect headers (exclude empty rows) and resolve variables
+                // Collect headers (exclude empty rows and auto headers) and resolve variables
                 Headers = Headers
-                    .Where(h => !string.IsNullOrWhiteSpace(h.Key))
+                    .Where(h => !string.IsNullOrWhiteSpace(h.Key) && !h.IsAuto)
                     .ToDictionary(
                         h => _variableService.ResolveVariables(h.Key, _model),
                         h => _variableService.ResolveVariables(h.Value, _model)),
@@ -317,11 +346,125 @@ public partial class RequestViewModel : TabViewModel
     }
 
     [RelayCommand]
+    private async Task OpenSettings()
+    {
+        var dialog = new Gantry.UI.Features.Requests.Views.RequestSettingsDialog
+        {
+            DataContext = this // Bind directly to this VM so changes apply immediately
+        };
+
+        // Find the main window to set owner
+        if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            if (desktop.MainWindow != null)
+            {
+                await dialog.ShowDialog(desktop.MainWindow);
+            }
+        }
+    }
+
+    [RelayCommand]
+    private async Task SaveResponse()
+    {
+        if (Response == null || string.IsNullOrEmpty(Response.Body)) return;
+
+        // Determine directory
+        string directory;
+        if (!string.IsNullOrEmpty(_model.Path) && _model.Path.EndsWith(".req"))
+        {
+            directory = _model.Path;
+        }
+        else if (!string.IsNullOrEmpty(_model.Path))
+        {
+            directory = System.IO.Path.GetDirectoryName(_model.Path) ?? "";
+        }
+        else
+        {
+            // Fallback if path is missing (e.g. new request not saved)
+            // We should probably prompt or save to a temp location, but for now let's try to find parent
+            directory = ""; 
+            // If we can't find a path, we can't save to the "request's directory".
+            // Maybe we should just return or show an error?
+            // Or fallback to the collection path?
+            var parent = _model.Parent;
+            while (parent != null)
+            {
+                if (parent is Collection c && !string.IsNullOrEmpty(c.Path))
+                {
+                    directory = c.Path; // Collection path is usually the folder
+                    break;
+                }
+                parent = parent.Parent;
+            }
+        }
+
+        if (string.IsNullOrEmpty(directory)) return; // Cannot save
+
+        if (!System.IO.Directory.Exists(directory)) System.IO.Directory.CreateDirectory(directory);
+
+        var filePath = System.IO.Path.Combine(directory, "responses.json");
+        List<SavedResponse> responses = new();
+
+        // Read existing if file exists
+        if (System.IO.File.Exists(filePath))
+        {
+            try
+            {
+                var json = await System.IO.File.ReadAllTextAsync(filePath);
+                var existing = System.Text.Json.JsonSerializer.Deserialize<List<SavedResponse>>(json, new System.Text.Json.JsonSerializerOptions 
+                { 
+                    TypeInfoResolver = Gantry.Infrastructure.Serialization.WorkspaceJsonContext.Default 
+                });
+                if (existing != null) responses.AddRange(existing);
+            }
+            catch
+            {
+                // Ignore error, overwrite or append to empty
+            }
+        }
+
+        // Add new response
+        responses.Add(new SavedResponse
+        {
+            Name = $"{_model.Name} - {DateTime.Now:yyyy-MM-dd HH:mm:ss}",
+            StatusCode = Response.StatusCode,
+            Body = Response.Body,
+            Timestamp = DateTime.Now,
+            DurationMs = (long)(_model.History.LastOrDefault()?.DurationMs ?? 0),
+            Size = _model.History.LastOrDefault()?.Size ?? 0,
+            Headers = Response.Headers.ToDictionary(h => h.Key, h => h.Value)
+        });
+
+        // Write back
+        var options = new System.Text.Json.JsonSerializerOptions 
+        { 
+            WriteIndented = true,
+            TypeInfoResolver = Gantry.Infrastructure.Serialization.WorkspaceJsonContext.Default 
+        };
+        var newJson = System.Text.Json.JsonSerializer.Serialize(responses, options);
+        await System.IO.File.WriteAllTextAsync(filePath, newJson);
+    }
+
+    [RelayCommand]
     private void SelectHistoryItem(HistoryItemViewModel? item)
     {
         if (item != null)
         {
             Response = new ResponseViewModel(item.Model);
+        }
+    }
+    private void AddAutoHeader(string key, string value)
+    {
+        // Only add if not already present (user might have overridden it, though auto headers are usually separate)
+        // Postman shows them as separate, uneditable (or editable if you override). 
+        // For now, let's just add them as visual indicators.
+        if (!Headers.Any(h => h.Key.Equals(key, StringComparison.OrdinalIgnoreCase)))
+        {
+            Headers.Add(new HeaderViewModel(new HeaderItem { Key = key, Value = value })
+            {
+                IsAuto = true,
+                IsReadOnly = true
+            });
         }
     }
 }

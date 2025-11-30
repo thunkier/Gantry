@@ -39,7 +39,9 @@ public class CollectionImportExportService
         {
             var json = await System.IO.File.ReadAllTextAsync(filePath);
             var parser = new PostmanCollectionParser();
-            return parser.Parse(json);
+            var collection = parser.Parse(json);
+            collection.Path = filePath;
+            return collection;
         }
         else // Gantry JSON
         {

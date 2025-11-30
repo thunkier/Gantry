@@ -28,7 +28,7 @@ public class HttpService : IHttpService
         client.Timeout = TimeSpan.FromMilliseconds(request.TimeoutMs > 0 ? request.TimeoutMs : 100000);
 
         using var httpRequest = CreateHttpRequestMessage(request);
-        ApplyAuthentication(httpRequest, request.Auth);
+        ApplyAuthentication(httpRequest, request);
 
         var stopwatch = Stopwatch.StartNew();
         HttpResponseMessage? response = null;
@@ -98,7 +98,8 @@ public class HttpService : IHttpService
         {
             RequestUri = new Uri(request.Url),
             Method = new HttpMethod(request.Method),
-            Version = Version.TryParse(request.HttpVersion.Replace("HTTP/", ""), out var v) ? v : HttpVersion.Version11
+            Version = ParseHttpVersion(request.HttpVersion),
+            VersionPolicy = MapVersionPolicy(request.VersionPolicy)
         };
 
         string? contentType = null;
@@ -117,10 +118,13 @@ public class HttpService : IHttpService
             }
         }
 
-        if (!string.IsNullOrEmpty(request.Body))
+        // Auto-generated headers
+        if (!httpRequest.Headers.Contains("User-Agent"))
         {
-            // Default to application/json if not specified
-            httpRequest.Content = new StringContent(request.Body, Encoding.UTF8, contentType ?? "application/json");
+            httpRequest.Headers.TryAddWithoutValidation("User-Agent", "Gantry/1.0");
+        }
+        if (!httpRequest.Headers.Contains("Accept"))
+        {
         }
 
         return httpRequest;
@@ -146,24 +150,55 @@ public class HttpService : IHttpService
         return (Encoding.UTF8.GetString(bytes), size);
     }
 
-    private void ApplyAuthentication(HttpRequestMessage request, AuthConfig? auth)
+    private void ApplyAuthentication(HttpRequestMessage httpRequest, RequestModel requestModel)
     {
+        var auth = requestModel.Auth;
         if (auth == null || auth.Type == Gantry.Core.Domain.Settings.AuthType.None) return;
 
         // Uses AuthenticationHeaderValue for stricter RFC compliance
         switch (auth.Type)
         {
             case Gantry.Core.Domain.Settings.AuthType.Basic:
-                if (!string.IsNullOrEmpty(auth.Username))
                 {
-                    var token = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{auth.Username}:{auth.Password}"));
-                    request.Headers.Authorization = new AuthenticationHeaderValue("Basic", token);
+                    if (!string.IsNullOrEmpty(auth.Username))
+                    {
+                        var token = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{auth.Username}:{auth.Password}"));
+                        httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Basic", token);
+                    }
                 }
                 break;
             case Gantry.Core.Domain.Settings.AuthType.BearerToken:
-                if (!string.IsNullOrEmpty(auth.Token))
                 {
-                    request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", auth.Token);
+                    if (!string.IsNullOrEmpty(auth.Token))
+                    {
+                        httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", auth.Token);
+                    }
+                }
+                break;
+            case Gantry.Core.Domain.Settings.AuthType.OAuth1:
+                {
+                    if (auth.Attributes != null)
+                    {
+                        var authHeader = OAuth1Helper.GetAuthorizationHeader(httpRequest.RequestUri?.ToString() ?? "", httpRequest.Method.Method, auth.Attributes);
+                        httpRequest.Headers.TryAddWithoutValidation("Authorization", authHeader);
+                    }
+                }
+                break;
+            case Gantry.Core.Domain.Settings.AuthType.OAuth2:
+                {
+                    // For OAuth2, if we have a token, use it as Bearer. 
+                    // If we need to fetch it (Client Credentials), that logic would go here or in a separate service.
+                    // For now, let's assume the token is already populated in AuthConfig.Token or Attributes["accessToken"]
+                    var token = auth.Token;
+                    if (string.IsNullOrEmpty(token) && auth.Attributes != null && auth.Attributes.TryGetValue("accessToken", out var t))
+                    {
+                        token = t;
+                    }
+
+                    if (!string.IsNullOrEmpty(token))
+                    {
+                        httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                    }
                 }
                 break;
         }
@@ -180,4 +215,25 @@ public class HttpService : IHttpService
         return protocols == SslProtocols.None ? SslProtocols.Tls12 : protocols;
     }
 #pragma warning restore SYSLIB0039
+
+    private Version ParseHttpVersion(string versionString)
+    {
+        return versionString switch
+        {
+            "HTTP/2" => HttpVersion.Version20,
+            "HTTP/3" => HttpVersion.Version30,
+            "HTTP/1.0" => HttpVersion.Version10,
+            _ => HttpVersion.Version11
+        };
+    }
+
+    private System.Net.Http.HttpVersionPolicy MapVersionPolicy(Gantry.Core.Domain.Http.HttpVersionPolicy policy)
+    {
+        return policy switch
+        {
+            Gantry.Core.Domain.Http.HttpVersionPolicy.RequestVersionOrHigher => System.Net.Http.HttpVersionPolicy.RequestVersionOrHigher,
+            Gantry.Core.Domain.Http.HttpVersionPolicy.RequestVersionExact => System.Net.Http.HttpVersionPolicy.RequestVersionExact,
+            _ => System.Net.Http.HttpVersionPolicy.RequestVersionOrLower
+        };
+    }
 }

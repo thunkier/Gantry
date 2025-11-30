@@ -19,6 +19,12 @@ public partial class HeaderViewModel : ObservableObject
     [ObservableProperty]
     private bool _isActive = true;
 
+    [ObservableProperty]
+    private bool _isAuto;
+
+    [ObservableProperty]
+    private bool _isReadOnly;
+
     public HeaderViewModel(HeaderItem model)
     {
         _model = model;

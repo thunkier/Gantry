@@ -9,6 +9,8 @@ public class VariableService : IVariableService
     // Matches ${variableName}
     private static readonly Regex VariableRegex = new(@"\$\{(.+?)\}", RegexOptions.Compiled);
 
+    private readonly SystemVariableService _systemVariables = new();
+
     public string ResolveVariables(string input, ISettingsContainer context)
     {
         if (string.IsNullOrEmpty(input)) return input;
@@ -33,6 +35,9 @@ public class VariableService : IVariableService
             }
             current = current.Parent;
         }
-        return null;
+
+        // Fallback to system variables
+        var sysVar = _systemVariables.Variables.FirstOrDefault(v => v.Enabled && v.Key == key);
+        return sysVar?.Value;
     }
 }

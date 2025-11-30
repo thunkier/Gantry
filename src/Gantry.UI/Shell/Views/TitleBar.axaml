@@ -26,7 +26,7 @@
     </Border>
 
     <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="5" Margin="10,0">
-      <Button Content="⚙" Background="Transparent" BorderThickness="0" Padding="8" />
+      <Button Content="⚙" Command="{Binding OpenSettingsCommand}" Background="Transparent" BorderThickness="0" Padding="8" />
     </StackPanel>
 
     <StackPanel Grid.Column="4" x:Name="WindowsCaptionButtons" Orientation="Horizontal" IsVisible="False">

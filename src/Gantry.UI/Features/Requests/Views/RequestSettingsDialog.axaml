@@ -1,0 +1,117 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:Gantry.UI.Features.Requests.ViewModels"
+        mc:Ignorable="d" d:DesignWidth="500" d:DesignHeight="600"
+        x:Class="Gantry.UI.Features.Requests.Views.RequestSettingsDialog"
+        x:DataType="vm:RequestViewModel"
+        Title="Request Settings"
+        Width="500" Height="600"
+        WindowStartupLocation="CenterOwner"
+        CanResize="False">
+
+    <ScrollViewer>
+        <StackPanel Spacing="20" Margin="20">
+            <!-- HTTP Version -->
+            <StackPanel Spacing="5">
+                <TextBlock Text="HTTP Version" FontWeight="Bold"/>
+                <TextBlock Text="Select the HTTP version to use for sending the request." TextWrapping="Wrap" Opacity="0.7" FontSize="12"/>
+                <ComboBox ItemsSource="{Binding HttpVersions}" SelectedItem="{Binding HttpVersion}" MinWidth="150"/>
+            </StackPanel>
+
+            <Separator Background="#33FFFFFF"/>
+
+            <!-- SSL Certificate Verification -->
+            <StackPanel Spacing="5">
+                <CheckBox IsChecked="{Binding EnableSslCertificateVerification}" Content="Enable SSL certificate verification"/>
+                <TextBlock Text="Verify SSL certificates when sending a request. Verification failures will result in the request being aborted." 
+                           TextWrapping="Wrap" Opacity="0.7" FontSize="12" Margin="28,0,0,0"/>
+            </StackPanel>
+
+            <Separator Background="#33FFFFFF"/>
+
+            <!-- Redirect Settings -->
+            <StackPanel Spacing="10">
+                <TextBlock Text="Redirect Behavior" FontWeight="Bold"/>
+                
+                <CheckBox IsChecked="{Binding AutomaticallyFollowRedirects}" Content="Automatically follow redirects"/>
+                <TextBlock Text="Follow HTTP 3xx responses as redirects." 
+                           TextWrapping="Wrap" Opacity="0.7" FontSize="12" Margin="28,0,0,0"/>
+
+                <CheckBox IsChecked="{Binding FollowOriginalHttpMethod}" Content="Follow original HTTP Method" 
+                          IsEnabled="{Binding AutomaticallyFollowRedirects}"/>
+                <TextBlock Text="Redirect with the original HTTP method instead of the default behavior of redirecting with GET." 
+                           TextWrapping="Wrap" Opacity="0.7" FontSize="12" Margin="28,0,0,0"/>
+
+                <CheckBox IsChecked="{Binding FollowAuthorizationHeader}" Content="Follow Authorization header"
+                          IsEnabled="{Binding AutomaticallyFollowRedirects}"/>
+                <TextBlock Text="Retain authorization header when a redirect happens to a different hostname." 
+                           TextWrapping="Wrap" Opacity="0.7" FontSize="12" Margin="28,0,0,0"/>
+
+                <CheckBox IsChecked="{Binding RemoveRefererHeaderOnRedirect}" Content="Remove referer header on redirect"
+                          IsEnabled="{Binding AutomaticallyFollowRedirects}"/>
+                <TextBlock Text="Remove the referer header when a redirect happens." 
+                           TextWrapping="Wrap" Opacity="0.7" FontSize="12" Margin="28,0,0,0"/>
+
+                <StackPanel Spacing="5" IsEnabled="{Binding AutomaticallyFollowRedirects}">
+                    <TextBlock Text="Maximum number of redirects"/>
+                    <NumericUpDown Value="{Binding MaximumNumberOfRedirects}" Minimum="0" Maximum="50" Increment="1" FormatString="0"/>
+                    <TextBlock Text="Set a cap on the maximum number of redirects to follow." 
+                               TextWrapping="Wrap" Opacity="0.7" FontSize="12"/>
+                </StackPanel>
+            </StackPanel>
+
+            <Separator Background="#33FFFFFF"/>
+
+            <!-- HTTP Parser and Encoding -->
+            <StackPanel Spacing="10">
+                <TextBlock Text="HTTP Parser and Encoding" FontWeight="Bold"/>
+                
+                <CheckBox IsChecked="{Binding EnableStrictHttpParser}" Content="Enable strict HTTP parser"/>
+                <TextBlock Text="Restrict responses with invalid HTTP headers." 
+                           TextWrapping="Wrap" Opacity="0.7" FontSize="12" Margin="28,0,0,0"/>
+
+                <CheckBox IsChecked="{Binding EncodeUrlAutomatically}" Content="Encode URL automatically"/>
+                <TextBlock Text="Encode the URL's path, query parameters, and authentication fields." 
+                           TextWrapping="Wrap" Opacity="0.7" FontSize="12" Margin="28,0,0,0"/>
+            </StackPanel>
+
+            <Separator Background="#33FFFFFF"/>
+
+            <!-- Cookie Settings -->
+            <StackPanel Spacing="5">
+                <CheckBox IsChecked="{Binding DisableCookieJar}" Content="Disable cookie jar"/>
+                <TextBlock Text="Prevent cookies used in this request from being stored in the cookie jar. Existing cookies in the cookie jar will not be added as headers for this request." 
+                           TextWrapping="Wrap" Opacity="0.7" FontSize="12" Margin="28,0,0,0"/>
+            </StackPanel>
+
+            <Separator Background="#33FFFFFF"/>
+
+            <!-- TLS/SSL Settings -->
+            <StackPanel Spacing="10">
+                <TextBlock Text="TLS/SSL Settings" FontWeight="Bold"/>
+                
+                <CheckBox IsChecked="{Binding UseServerCipherSuiteDuringHandshake}" Content="Use server cipher suite during handshake"/>
+                <TextBlock Text="Use the server's cipher suite order instead of the client's during handshake." 
+                           TextWrapping="Wrap" Opacity="0.7" FontSize="12" Margin="28,0,0,0"/>
+
+                <TextBlock Text="TLS/SSL protocols" Margin="0,10,0,5"/>
+                <TextBlock Text="Specify which SSL and TLS protocol versions to enable/disable during handshake." 
+                           TextWrapping="Wrap" Opacity="0.7" FontSize="12" Margin="0,0,0,5"/>
+                <ItemsControl ItemsSource="{Binding AvailableTlsProtocols}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <CheckBox IsChecked="{Binding IsEnabled}" Content="{Binding Name}" Margin="0,2"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <TextBlock Text="Cipher suite selection" Margin="0,10,0,5"/>
+                <TextBlock Text="Order of cipher suites that the SSL server profile uses to establish a secure connection." 
+                           TextWrapping="Wrap" Opacity="0.7" FontSize="12" Margin="0,0,0,5"/>
+                <ComboBox ItemsSource="{Binding CipherSuites}" SelectedItem="{Binding CipherSuiteSelection}" MinWidth="200"/>
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</Window>

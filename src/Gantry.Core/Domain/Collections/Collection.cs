@@ -7,6 +7,9 @@ namespace Gantry.Core.Domain.Collections;
 public class Collection : ISettingsContainer
 {
     public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public string PostmanId { get; set; } = string.Empty;
+    public string SchemaUrl { get; set; } = string.Empty;
     public string Path { get; set; } = string.Empty;
     public ObservableCollection<Collection> SubCollections { get; set; } = new();
     public ObservableCollection<RequestItem> Requests { get; set; } = new();

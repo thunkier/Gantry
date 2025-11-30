@@ -114,4 +114,16 @@ public partial class TitleBarViewModel : ObservableObject
             System.Diagnostics.Process.Start(processModule.FileName);
         }
     }
+    [RelayCommand]
+    private async Task OpenSettings()
+    {
+        var dialog = new Gantry.UI.Shell.Views.AppSettingsDialog();
+        if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
+        {
+            if (desktop.MainWindow != null)
+            {
+                await dialog.ShowDialog(desktop.MainWindow);
+            }
+        }
+    }
 }

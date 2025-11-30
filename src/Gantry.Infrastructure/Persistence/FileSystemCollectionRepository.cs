@@ -98,7 +98,13 @@ public class FileSystemCollectionRepository
         {
             var m = Toml.ToModel(File.ReadAllText(path));
             if (m.TryGetValue("variables", out var vObj) && vObj is TomlTable vTbl)
-                foreach (var k in vTbl) c.Variables.Add(new Variable { Key = k.Key, Value = k.Value?.ToString() ?? "", Enabled = true });
+            {
+                var flattened = FlattenVariables(vTbl);
+                foreach (var kvp in flattened)
+                {
+                    c.Variables.Add(new Variable { Key = kvp.Key, Value = kvp.Value, Enabled = true });
+                }
+            }
 
             if (m.TryGetValue("auth", out var aObj) && aObj is TomlTable aTbl)
             {
@@ -109,6 +115,28 @@ public class FileSystemCollectionRepository
             }
         }
         catch { }
+    }
+
+    private Dictionary<string, string> FlattenVariables(TomlTable table, string prefix = "")
+    {
+        var result = new Dictionary<string, string>();
+        foreach (var kvp in table)
+        {
+            var key = string.IsNullOrEmpty(prefix) ? kvp.Key : $"{prefix}.{kvp.Key}";
+            if (kvp.Value is TomlTable subTable)
+            {
+                var subResult = FlattenVariables(subTable, key);
+                foreach (var subKvp in subResult)
+                {
+                    result[subKvp.Key] = subKvp.Value;
+                }
+            }
+            else
+            {
+                result[key] = kvp.Value?.ToString() ?? "";
+            }
+        }
+        return result;
     }
 
     private void SaveMeta(Collection c, string path)

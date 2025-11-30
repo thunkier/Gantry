@@ -186,7 +186,7 @@
             <Border Grid.Column="1" 
                     Name="ResizeHandle"
                     Background="#3E3E42" 
-                    Width="4" 
+                    Width="1" 
                     VerticalAlignment="Stretch" 
                     Cursor="SizeWestEast"
                     PointerPressed="OnResizeHandlePointerPressed"

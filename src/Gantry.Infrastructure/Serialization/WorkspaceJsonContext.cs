@@ -10,6 +10,8 @@ namespace Gantry.Infrastructure.Serialization;
 [JsonSerializable(typeof(Gantry.Core.Domain.Collections.Collection))]
 [JsonSerializable(typeof(List<string>))]
 [JsonSerializable(typeof(AppSessionState))]
+[JsonSerializable(typeof(Gantry.Core.Domain.Http.SavedResponse))]
+[JsonSerializable(typeof(List<Gantry.Core.Domain.Http.SavedResponse>))]
 public partial class WorkspaceJsonContext : JsonSerializerContext
 {
 }

@@ -16,6 +16,7 @@ public class RequestModel
 
     // HTTP Settings
     public string HttpVersion { get; set; } = "HTTP/1.1";
+    public HttpVersionPolicy VersionPolicy { get; set; } = HttpVersionPolicy.RequestVersionOrLower;
     public bool EnableSslCertificateVerification { get; set; } = true;
     public bool AutomaticallyFollowRedirects { get; set; } = true;
     public bool FollowOriginalHttpMethod { get; set; } = false;
@@ -28,6 +29,10 @@ public class RequestModel
     public int MaximumNumberOfRedirects { get; set; } = 10;
     public List<string> DisabledTlsProtocols { get; set; } = new();
     public string CipherSuiteSelection { get; set; } = "Default";
+
+    // Postman Specific
+    public ProxyConfig? Proxy { get; set; }
+    public CertificateConfig? Certificate { get; set; }
 }
 
 public class AuthConfig
@@ -36,4 +41,30 @@ public class AuthConfig
     public string? Username { get; set; }
     public string? Password { get; set; }
     public string? Token { get; set; }
+    public Dictionary<string, string>? Attributes { get; set; }
+}
+
+public class ProxyConfig
+{
+    public string Match { get; set; } = "http+https://*/*";
+    public string Host { get; set; } = string.Empty;
+    public int Port { get; set; } = 8080;
+    public bool Tunnel { get; set; }
+    public bool Disabled { get; set; }
+}
+
+public class CertificateConfig
+{
+    public string Name { get; set; } = string.Empty;
+    public List<string> Matches { get; set; } = new();
+    public string KeySrc { get; set; } = string.Empty;
+    public string CertSrc { get; set; } = string.Empty;
+    public string Passphrase { get; set; } = string.Empty;
+}
+
+public enum HttpVersionPolicy
+{
+    RequestVersionOrLower,
+    RequestVersionOrHigher,
+    RequestVersionExact
 }

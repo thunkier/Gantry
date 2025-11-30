@@ -29,6 +29,12 @@
                 <TextBlock Text="Size:" FontWeight="SemiBold" />
                 <TextBlock Text="{Binding Size}" />
             </StackPanel>
+            
+            <!-- Save Body Button -->
+            <Button Content="Save Body" 
+                    x:CompileBindings="False"
+                    Command="{Binding DataContext.SaveResponseCommand, RelativeSource={RelativeSource AncestorType=UserControl, AncestorLevel=2}}" 
+                    Margin="20,0,0,0" Padding="5,2" FontSize="12"/>
         </StackPanel>
     </Border>
 
