@@ -122,6 +122,24 @@
                                 <TextBox Text="{Binding EditableName}" VerticalAlignment="Center" IsVisible="{Binding IsEditing}" MinWidth="100" Watermark="Enter name..." LostFocus="OnTextBoxLostFocus" AttachedToVisualTree="OnTextBoxAttached" />
                             </StackPanel>
                         </DataTemplate>
+                        <DataTemplate DataType="collectionvm:NodeTaskViewModel">
+                            <StackPanel Orientation="Horizontal" Spacing="8" Background="Transparent" PointerPressed="OnPointerPressed" Margin="-40,0,0,0">
+                                <Interaction.Behaviors>
+                                    <EventTriggerBehavior EventName="DoubleTapped">
+                                        <InvokeCommandAction Command="{Binding #SidebarRoot.DataContext.OpenTaskCommand}" CommandParameter="{Binding}" />
+                                    </EventTriggerBehavior>
+                                </Interaction.Behaviors>
+                                <StackPanel.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="Rename" Command="{Binding #SidebarRoot.DataContext.RenameItemCommand}" CommandParameter="{Binding}" />
+                                        <MenuItem Header="Delete" Command="{Binding #SidebarRoot.DataContext.DeleteItemCommand}" CommandParameter="{Binding}" />
+                                    </ContextMenu>
+                                </StackPanel.ContextMenu>
+                                <PathIcon Data="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" Foreground="#C5C5C5" Width="14" Height="14" VerticalAlignment="Center"/>
+                                <TextBlock Text="{Binding Name}" VerticalAlignment="Center" IsVisible="{Binding !IsEditing}" Foreground="#CCCCCC" />
+                                <TextBox Text="{Binding EditableName}" VerticalAlignment="Center" IsVisible="{Binding IsEditing}" MinWidth="100" Watermark="Enter name..." LostFocus="OnTextBoxLostFocus" AttachedToVisualTree="OnTextBoxAttached" />
+                            </StackPanel>
+                        </DataTemplate>
                     </TreeView.DataTemplates>
                     <Interaction.Behaviors>
                         <EventTriggerBehavior EventName="DoubleTapped">
@@ -186,7 +204,7 @@
             <Border Grid.Column="1" 
                     Name="ResizeHandle"
                     Background="#3E3E42" 
-                    Width="1" 
+                    Width="2" 
                     VerticalAlignment="Stretch" 
                     Cursor="SizeWestEast"
                     PointerPressed="OnResizeHandlePointerPressed"

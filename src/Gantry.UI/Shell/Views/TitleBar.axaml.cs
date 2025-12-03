@@ -2,10 +2,14 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Platform.Storage;
 using Avalonia.VisualTree;
 using Gantry.UI.Shell.ViewModels;
 using Gantry.Core.Domain.Workspaces;
+using System;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
+using System.Linq;
 
 namespace Gantry.UI.Shell.Views;
 
@@ -14,7 +18,11 @@ public partial class TitleBar : UserControl
     public TitleBar()
     {
         InitializeComponent();
+        ConfigurePlatformUI();
+    }
 
+    private void ConfigurePlatformUI()
+    {
         if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
             WindowsCaptionButtons.IsVisible = true;
@@ -32,24 +40,94 @@ public partial class TitleBar : UserControl
         }
     }
 
+    protected override void OnDataContextChanged(EventArgs e)
+    {
+        base.OnDataContextChanged(e);
+
+        if (DataContext is TitleBarViewModel vm)
+        {
+            vm.OpenFolderDialog = ShowOpenFolderDialog;
+            vm.ImportGitDialog = ShowImportGitDialog;
+            vm.CreateWorkspaceDialog = ShowCreateWorkspaceDialog;
+        }
+    }
+
+    private async Task<string?> ShowOpenFolderDialog()
+    {
+        var topLevel = TopLevel.GetTopLevel(this);
+        if (topLevel?.StorageProvider == null) return null;
+
+        var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+        {
+            Title = "Open Workspace Folder",
+            AllowMultiple = false
+        });
+
+        return folders.Count > 0 ? folders[0].Path.LocalPath : null;
+    }
+
+    private async Task<string?> ShowCreateWorkspaceDialog()
+    {
+        var topLevel = TopLevel.GetTopLevel(this);
+        if (topLevel?.StorageProvider == null) return null;
+
+        var folders = await topLevel.StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions
+        {
+            Title = "Select Folder for New Workspace",
+            AllowMultiple = false
+        });
+
+        return folders.Count > 0 ? folders[0].Path.LocalPath : null;
+    }
+
+    private async Task<string?> ShowImportGitDialog()
+    {
+        var dialog = new Gantry.UI.Features.Workspaces.Views.GitCloneDialog();
+        var topLevel = TopLevel.GetTopLevel(this);
+        
+        if (topLevel is Window window)
+        {
+            var result = await dialog.ShowDialog<bool?>(window);
+            if (result == true)
+            {
+                return dialog.GitUrl;
+            }
+        }
+
+        return null;
+    }
+
+    private void OnSearchBoxGotFocus(object? sender, GotFocusEventArgs e)
+    {
+        // Show search results if there's text
+        if (DataContext is TitleBarViewModel vm && vm.Search != null && !string.IsNullOrWhiteSpace(vm.Search.SearchText))
+        {
+            vm.Search.IsPopupOpen = true;
+        }
+    }
+
     private void OnTitleBarPointerPressed(object? sender, PointerPressedEventArgs e)
     {
+        // FIRST: Check if we're clicking on an interactive element
         if (e.Source is Visual visual)
         {
-            // Prevent dragging if clicking the Workspace Switcher button or other interactables
-            if (visual.FindAncestorOfType<Button>() != null)
+            // Don't handle events from buttons, menus, or menu items
+            if (visual.FindAncestorOfType<Button>() != null ||
+                visual.FindAncestorOfType<Menu>() != null ||
+                visual.FindAncestorOfType<MenuItem>() != null)
             {
                 return;
             }
         }
 
-        // Handle Double-Click to Maximize/Restore
+        // THEN: Handle double-click to maximize
         if (e.ClickCount == 2)
         {
             OnMaximizeClick(sender, e);
             return;
         }
 
+        // Finally: Handle drag
         if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
         {
             var window = TopLevel.GetTopLevel(this) as Window;
@@ -59,22 +137,17 @@ public partial class TitleBar : UserControl
 
     private void OnRecentWorkspaceSelected(object? sender, SelectionChangedEventArgs e)
     {
-        // When a user clicks a path in the "Recent" list
         if (e.AddedItems.Count > 0 &&
             e.AddedItems[0] is string path &&
             DataContext is TitleBarViewModel vm)
         {
-            // Create a temporary workspace object to trigger the ViewModel's setter,
-            // which in turn calls _workspaceService.OpenWorkspace(path)
             var name = System.IO.Path.GetFileName(path);
             vm.CurrentWorkspace = new Workspace(name, path);
 
-            // Reset selection so the same item can be clicked again in the future
             if (sender is ListBox listBox)
             {
                 listBox.SelectedItem = null;
 
-                // Helper to close the flyout by finding the parent Button
                 var button = listBox.FindAncestorOfType<Button>();
                 if (button?.Flyout != null)
                 {

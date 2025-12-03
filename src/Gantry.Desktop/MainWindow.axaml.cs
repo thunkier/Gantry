@@ -10,6 +10,7 @@ using Gantry.Infrastructure.Network;
 using Gantry.Infrastructure.Services;
 using Gantry.UI.Features.Workspaces.Views;
 using Gantry.UI.Shell.ViewModels;
+using static Gantry.UI.Shell.ViewModels.SearchViewModel;
 
 namespace Gantry.Desktop;
 
@@ -59,6 +60,17 @@ public partial class MainWindow : Window
             ConfigureDialogProviders(_viewModel);
 
             DataContext = _viewModel;
+        
+            // Wire up TitleBar event handlers
+            _viewModel.TitleBar.NewRequestRequested += OnNewRequestRequested;
+            _viewModel.TitleBar.NewCollectionRequested += OnNewCollectionRequested;
+            _viewModel.TitleBar.NewNodeTaskRequested += OnNewNodeTaskRequested;
+            _viewModel.TitleBar.SaveAllRequested += OnSaveAllRequested;
+            _viewModel.TitleBar.CloseAllTabsRequested += OnCloseAllTabsRequested;
+
+            // Wire up search
+            _viewModel.TitleBar.InitializeSearch(_viewModel.Sidebar);
+            _viewModel.TitleBar.SearchItemSelected += OnSearchItemSelected;
         }
         catch (Exception ex)
         {
@@ -183,6 +195,85 @@ public partial class MainWindow : Window
         {
             Debug.WriteLine($"Error opening Git clone dialog: {ex.Message}");
             return null;
+        }
+    }
+
+    private void OnSearchItemSelected(object? sender, SearchResultItem item)
+    {
+        if (_viewModel == null) return;
+
+        switch (item.Type)
+        {
+            case SearchResultType.Request:
+                if (item.Data is Gantry.Core.Domain.Collections.RequestItem request)
+                {
+                    _viewModel.AddTabCommand.Execute(new Gantry.UI.Features.Requests.ViewModels.RequestViewModel(
+                        new HttpService(),
+                        new WorkspaceService(),
+                        new VariableService(),
+                        request));
+                }
+                break;
+
+            case SearchResultType.Collection:
+                if (item.Data is Gantry.UI.Features.Collections.ViewModels.CollectionViewModel collection)
+                {
+                    _viewModel.AddTabCommand.Execute(new Gantry.UI.Features.Collections.ViewModels.CollectionTabViewModel(collection));
+                }
+                break;
+
+            case SearchResultType.NodeTask:
+                if (item.Data is Gantry.UI.Features.Collections.ViewModels.NodeTaskViewModel nodeTask)
+                {
+                    _viewModel.AddTabCommand.Execute(new Gantry.UI.Shell.ViewModels.NodeEditorTabViewModel(nodeTask));
+                }
+                break;
+        }
+    }
+
+    private void OnNewRequestRequested(object? sender, EventArgs e)
+    {
+        if (_viewModel != null)
+        {
+            _viewModel.AddTabCommand.Execute(new Gantry.UI.Features.Requests.ViewModels.RequestViewModel(
+                new HttpService(),
+                new WorkspaceService(),
+                new VariableService()));
+        }
+    }
+
+    private async void OnNewCollectionRequested(object? sender, EventArgs e)
+    {
+        // TODO: Show create collection dialog
+        await Task.CompletedTask;
+    }
+
+    private void OnNewNodeTaskRequested(object? sender, EventArgs e)
+    {
+        if (_viewModel != null)
+        {
+            var task = new Gantry.UI.Features.Collections.ViewModels.NodeTaskViewModel(
+                new Gantry.Core.Domain.NodeEditor.NodeGraph { Name = "New Task" },
+                new WorkspaceService());
+            _viewModel.AddTabCommand.Execute(new Gantry.UI.Shell.ViewModels.NodeEditorTabViewModel(task));
+        }
+    }
+
+    private void OnSaveAllRequested(object? sender, EventArgs e)
+    {
+        // TODO: Implement Save All
+        Debug.WriteLine("Save All requested");
+    }
+
+    private void OnCloseAllTabsRequested(object? sender, EventArgs e)
+    {
+        if (_viewModel?.DockLayout?.RootPane?.Tabs != null)
+        {
+            while (_viewModel.DockLayout.RootPane.Tabs.Count > 0)
+            {
+                var tab = _viewModel.DockLayout.RootPane.Tabs[0];
+                _viewModel.DockLayout.RootPane.Tabs.Remove(tab);
+            }
         }
     }
 

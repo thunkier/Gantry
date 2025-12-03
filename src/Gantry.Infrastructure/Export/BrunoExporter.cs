@@ -14,7 +14,7 @@ public class BrunoExporter : ICollectionExporter
 
     private const string Indent = "  ";
 
-    public async Task<byte[]> ExportAsync(Collection collection)
+    public Task<byte[]> ExportAsync(Collection collection)
     {
         using var memoryStream = new MemoryStream();
 
@@ -30,10 +30,10 @@ public class BrunoExporter : ICollectionExporter
             ProcessFolders(collection.SubCollections, "", archive);
         }
 
-        return memoryStream.ToArray();
+        return Task.FromResult(memoryStream.ToArray());
     }
 
-    private void CreateBrunoConfig(Collection collection, ZipArchive archive)
+    private static void CreateBrunoConfig(Collection collection, ZipArchive archive)
     {
         var entry = archive.CreateEntry("bruno.json");
         using var stream = entry.Open();
@@ -49,7 +49,7 @@ public class BrunoExporter : ICollectionExporter
         JsonSerializer.Serialize(stream, config, new JsonSerializerOptions { WriteIndented = true });
     }
 
-    private void ProcessFolders(IEnumerable<Collection> folders, string parentPath, ZipArchive archive)
+    private static void ProcessFolders(IEnumerable<Collection> folders, string parentPath, ZipArchive archive)
     {
         foreach (var folder in folders)
         {
@@ -64,7 +64,7 @@ public class BrunoExporter : ICollectionExporter
         }
     }
 
-    private void ProcessRequests(IEnumerable<RequestItem> requests, string path, ZipArchive archive)
+    private static void ProcessRequests(IEnumerable<RequestItem> requests, string path, ZipArchive archive)
     {
         int sequence = 1;
         foreach (var item in requests)
@@ -79,7 +79,7 @@ public class BrunoExporter : ICollectionExporter
         }
     }
 
-    private string GenerateBruContent(RequestItem item, int sequence)
+    private static string GenerateBruContent(RequestItem item, int sequence)
     {
         var sb = new StringBuilder();
         var req = item.Request;
@@ -152,7 +152,7 @@ public class BrunoExporter : ICollectionExporter
         return sb.ToString();
     }
 
-    private void WriteAuthBlock(StringBuilder sb, AuthSettings auth)
+    private static void WriteAuthBlock(StringBuilder sb, AuthSettings auth)
     {
         switch (auth.Type)
         {
@@ -171,7 +171,7 @@ public class BrunoExporter : ICollectionExporter
         sb.AppendLine();
     }
 
-    private string MapAuthType(AuthType type) => type switch
+    private static string MapAuthType(AuthType type) => type switch
     {
         AuthType.Inherit => "inherit",
         AuthType.BearerToken => "bearer",
@@ -179,7 +179,7 @@ public class BrunoExporter : ICollectionExporter
         _ => "none"
     };
 
-    private string InferBodyType(RequestModel req)
+    private static string InferBodyType(RequestModel req)
     {
         if (string.IsNullOrWhiteSpace(req.Body)) return "none";
 

@@ -8,6 +8,13 @@ namespace Gantry.UI.Features.Collections.Services;
 
 public class CollectionService
 {
+    private readonly Gantry.Infrastructure.Services.WorkspaceService _workspaceService;
+
+    public CollectionService(Gantry.Infrastructure.Services.WorkspaceService workspaceService)
+    {
+        _workspaceService = workspaceService;
+    }
+
     public CollectionViewModel CreateCollection(string parentPath, string baseName = "New Collection")
     {
         var newPath = Path.Combine(parentPath, baseName);
@@ -29,7 +36,7 @@ public class CollectionService
         {
             Name = Path.GetFileName(newPath),
             Path = newPath
-        });
+        }, _workspaceService);
     }
 
     private readonly Gantry.Infrastructure.Persistence.RequestBundleRepository _bundleRepository = new();
@@ -81,7 +88,7 @@ public class CollectionService
             Parent = parent.Model
         };
 
-        return new CollectionViewModel(subCol);
+        return new CollectionViewModel(subCol, _workspaceService);
     }
 
     public void DeleteItem(ITreeItemViewModel item)

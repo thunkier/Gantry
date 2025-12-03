@@ -24,156 +24,425 @@
       <cv:BoolToBrushConverter x:Key="BoolToBrushConverter" />
   </UserControl.Resources>
 
+  <UserControl.Styles>
+      <!-- Button Styles -->
+      <Style Selector="Button.action-btn">
+          <Setter Property="Background" Value="#2D2D30" />
+          <Setter Property="Foreground" Value="#CCCCCC" />
+          <Setter Property="BorderThickness" Value="0" />
+          <Setter Property="CornerRadius" Value="2" />
+          <Setter Property="Padding" Value="12,6" />
+          <Setter Property="FontSize" Value="13" />
+      </Style>
+      <Style Selector="Button.action-btn:pointerover">
+          <Setter Property="Background" Value="#3E3E42" />
+          <Setter Property="Foreground" Value="#FFFFFF" />
+      </Style>
+      <Style Selector="Button.action-btn:disabled">
+          <Setter Property="Opacity" Value="0.5" />
+      </Style>
+      <Style Selector="Button.primary-btn">
+          <Setter Property="Background" Value="#007ACC" />
+          <Setter Property="Foreground" Value="#FFFFFF" />
+          <Setter Property="BorderThickness" Value="0" />
+          <Setter Property="CornerRadius" Value="2" />
+          <Setter Property="Padding" Value="16,6" />
+          <Setter Property="FontSize" Value="13" />
+          <Setter Property="FontWeight" Value="SemiBold" />
+      </Style>
+      <Style Selector="Button.primary-btn:pointerover">
+          <Setter Property="Background" Value="#1C97EA" />
+      </Style>
+      <Style Selector="Button.primary-btn:disabled">
+          <Setter Property="Background" Value="#005A9E" />
+          <Setter Property="Opacity" Value="0.6" />
+      </Style>
+      
+      <!-- Tab Styles -->
+      <Style Selector="TabControl">
+          <Setter Property="Background" Value="#1E1E1E" />
+      </Style>
+      <Style Selector="TabItem">
+          <Setter Property="FontSize" Value="13" />
+          <Setter Property="Foreground" Value="#969696" />
+          <Setter Property="Padding" Value="12,6" />
+      </Style>
+      <Style Selector="TabItem:selected">
+          <Setter Property="Foreground" Value="#FFFFFF" />
+      </Style>
+      <Style Selector="TabItem:pointerover">
+          <Setter Property="Foreground" Value="#CCCCCC" />
+      </Style>
+      
+      <!-- DataGrid Styles -->
+      <Style Selector="DataGrid">
+          <Setter Property="Background" Value="#1E1E1E" />
+          <Setter Property="GridLinesVisibility" Value="Horizontal" />
+          <Setter Property="HorizontalGridLinesBrush" Value="#3E3E42" />
+          <Setter Property="VerticalGridLinesBrush" Value="Transparent" />
+          <Setter Property="BorderThickness" Value="0" />
+          <Setter Property="HeadersVisibility" Value="Column" />
+          <Setter Property="CanUserResizeColumns" Value="True" />
+          <Setter Property="CanUserSortColumns" Value="False" />
+      </Style>
+      <Style Selector="DataGridColumnHeader">
+          <Setter Property="Background" Value="#252526" />
+          <Setter Property="Foreground" Value="#969696" />
+          <Setter Property="FontWeight" Value="SemiBold" />
+          <Setter Property="FontSize" Value="11" />
+          <Setter Property="Padding" Value="8,6" />
+          <Setter Property="SeparatorBrush" Value="#3E3E42" />
+      </Style>
+      <Style Selector="DataGridRow">
+          <Setter Property="Background" Value="#1E1E1E" />
+      </Style>
+      <Style Selector="DataGridRow:nth-child(2n)">
+          <Setter Property="Background" Value="#252526" />
+      </Style>
+      <Style Selector="DataGridRow:selected /template/ Rectangle#BackgroundRectangle">
+          <Setter Property="Fill" Value="#37373D" />
+      </Style>
+      <Style Selector="DataGridRow:pointerover /template/ Rectangle#BackgroundRectangle">
+          <Setter Property="Fill" Value="#2A2D2E" />
+      </Style>
+  </UserControl.Styles>
+
   <UserControl.KeyBindings>
       <KeyBinding Gesture="Ctrl+S" Command="{Binding SaveCommand}" />
   </UserControl.KeyBindings>
 
-  <Grid RowDefinitions="Auto, *, 5, *">
-    <!-- Top Bar: Method, URL, Send -->
-    <!-- Top Bar: Method, URL, Save, Send, Settings -->
-    <Grid Grid.Row="0" ColumnDefinitions="Auto, *, Auto, Auto, Auto" Margin="10">
-      <ComboBox Grid.Column="0" ItemsSource="{Binding Methods}" SelectedItem="{Binding SelectedMethod}" MinWidth="100" />
-      
-      <!-- URL Box with Border -->
-      <Border Grid.Column="1" BorderBrush="Gray" BorderThickness="1" Margin="10,0" CornerRadius="3">
-          <ae:TextEditor Name="UrlEditor"
-                         Document="{Binding Url, Converter={x:Static cv:StringToTextDocumentConverter.Instance}}" 
-                         Margin="5,2" 
-                         Height="20"
-                         FontFamily="Cascadia Code,Consolas,Monospace"
-                         ShowLineNumbers="False"
-                         VerticalScrollBarVisibility="Hidden"
-                         HorizontalScrollBarVisibility="Hidden" />
-      </Border>
+  <Grid RowDefinitions="Auto, *, 4, *" Background="#1E1E1E">
+    <!-- Top Bar -->
+    <Border Grid.Row="0" Background="#252526" BorderBrush="#3E3E42" BorderThickness="0,0,0,1" Padding="12,10">
+        <Grid ColumnDefinitions="Auto, *, Auto, Auto, Auto">
+            <ComboBox Grid.Column="0" 
+                      ItemsSource="{Binding Methods}" 
+                      SelectedItem="{Binding SelectedMethod}" 
+                      MinWidth="110" 
+                      Background="#2D2D30"
+                      Foreground="#CCCCCC"
+                      BorderThickness="1"
+                      BorderBrush="#3E3E42" />
+            
+            <!-- URL Editor -->
+            <Border Grid.Column="1" 
+                    BorderBrush="#3E3E42" 
+                    BorderThickness="1" 
+                    Margin="10,0" 
+                    CornerRadius="2"
+                    Background="#1E1E1E">
+                <ae:TextEditor Name="UrlEditor"
+                               Document="{Binding Url, Converter={x:Static cv:StringToTextDocumentConverter.Instance}}" 
+                               Margin="8,4" 
+                               MinHeight="24"
+                               FontFamily="Cascadia Code,Consolas,Monospace"
+                               FontSize="13"
+                               Foreground="#CCCCCC"
+                               Background="Transparent"
+                               ShowLineNumbers="False"
+                               VerticalScrollBarVisibility="Hidden"
+                               HorizontalScrollBarVisibility="Auto" />
+            </Border>
 
-      <Button Grid.Column="2" Command="{Binding SaveCommand}" Content="Save" Margin="0,0,5,0" />
-      <Button Grid.Column="3" Command="{Binding SendRequestCommand}" Content="Send" IsEnabled="{Binding !IsLoading}" Margin="0,0,5,0" />
-      <Button Grid.Column="4" Command="{Binding ToggleHistoryCommand}" Content="History" Margin="0,0,5,0" 
-              IsVisible="{Binding !IsHistoryVisible}" ToolTip.Tip="Show History"/>
-    </Grid>
+            <Button Grid.Column="2" 
+                    Command="{Binding SaveCommand}" 
+                    Content="Save" 
+                    Classes="action-btn"
+                    Margin="0,0,8,0" />
+            <Button Grid.Column="3" 
+                    Command="{Binding SendRequestCommand}" 
+                    Content="Send" 
+                    IsEnabled="{Binding !IsLoading}" 
+                    Classes="primary-btn"
+                    Margin="0,0,8,0" />
+            <Button Grid.Column="4" 
+                    Command="{Binding ToggleHistoryCommand}" 
+                    Content="History" 
+                    Classes="action-btn"
+                    IsVisible="{Binding !IsHistoryVisible}" 
+                    ToolTip.Tip="Show History"/>
+        </Grid>
+    </Border>
 
-    <!-- Tabs for Request Details -->
-    <TabControl Grid.Row="1" Margin="10,0,10,0">
-      <TabItem Header="Params">
-        <DataGrid ItemsSource="{Binding Params}" AutoGenerateColumns="False">
-            <DataGrid.Columns>
-                <DataGridCheckBoxColumn Header="Active" Binding="{Binding IsActive}"/>
-                <DataGridTextColumn Header="Key" Binding="{Binding Key}"/>
-                <DataGridTextColumn Header="Value" Binding="{Binding Value}"/>
-                <DataGridTextColumn Header="Description" Binding="{Binding Description}"/>
-            </DataGrid.Columns>
-        </DataGrid>
-      </TabItem>
-      
-      <TabItem Header="Authorization">
-          <StackPanel Spacing="10" Margin="10" MaxWidth="600" HorizontalAlignment="Left">
-              <TextBlock Text="Type" FontWeight="Bold" />
-              <ComboBox ItemsSource="{Binding AuthTypes}" SelectedItem="{Binding Auth.Type}" MinWidth="200" />
-              
-              <!-- Inherit -->
-              <TextBlock Text="Inheriting authorization from parent collection." 
-                         IsVisible="{Binding Auth.Type, Converter={StaticResource EnumEqualityConverter}, ConverterParameter=Inherit}"
-                         FontStyle="Italic" Opacity="0.7" />
+    <!-- Request Details Tabs -->
+    <TabControl Grid.Row="1" Padding="0" Margin="0">
+        <TabItem Header="Params">
+            <DataGrid ItemsSource="{Binding Params}" 
+                      AutoGenerateColumns="False"
+                      Margin="0">
+                <DataGrid.Columns>
+                    <DataGridCheckBoxColumn Header="ACTIVE" Binding="{Binding IsActive}" Width="80"/>
+                    <DataGridTextColumn Header="KEY" Binding="{Binding Key}" Width="*"/>
+                    <DataGridTextColumn Header="VALUE" Binding="{Binding Value}" Width="2*"/>
+                    <DataGridTextColumn Header="DESCRIPTION" Binding="{Binding Description}" Width="2*"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </TabItem>
+        
+        <TabItem Header="Authorization">
+            <ScrollViewer>
+                <StackPanel Spacing="16" Margin="16" MaxWidth="700" HorizontalAlignment="Left">
+                    <StackPanel Spacing="6">
+                        <TextBlock Text="TYPE" FontWeight="SemiBold" FontSize="11" Foreground="#969696" />
+                        <ComboBox ItemsSource="{Binding AuthTypes}" 
+                                  SelectedItem="{Binding Auth.Type}" 
+                                  MinWidth="250"
+                                  Background="#2D2D30"
+                                  Foreground="#CCCCCC"
+                                  BorderBrush="#3E3E42" />
+                    </StackPanel>
+                    
+                    <!-- Inherit -->
+                    <Border IsVisible="{Binding Auth.Type, Converter={StaticResource EnumEqualityConverter}, ConverterParameter=Inherit}"
+                            Background="#2D2D30"
+                            BorderBrush="#3E3E42"
+                            BorderThickness="1"
+                            CornerRadius="2"
+                            Padding="12">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <PathIcon Data="M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z" 
+                                      Width="16" Height="16" 
+                                      Foreground="#007ACC"
+                                      VerticalAlignment="Center" />
+                            <TextBlock Text="Inheriting authorization from parent collection" 
+                                       FontStyle="Italic" 
+                                       Foreground="#969696"
+                                       VerticalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
 
-              <!-- Bearer Token -->
-              <StackPanel IsVisible="{Binding Auth.Type, Converter={StaticResource EnumEqualityConverter}, ConverterParameter=BearerToken}" Spacing="5">
-                  <TextBlock Text="Token" />
-                  <Border BorderBrush="Gray" BorderThickness="1" CornerRadius="3">
-                      <ae:TextEditor Document="{Binding Auth.Token, Converter={x:Static cv:StringToTextDocumentConverter.Instance}}" 
-                                     Height="20"
-                                     FontFamily="Cascadia Code,Consolas,Monospace"
-                                     ShowLineNumbers="False"
-                                     VerticalScrollBarVisibility="Hidden"
-                                     HorizontalScrollBarVisibility="Hidden" />
-                  </Border>
-              </StackPanel>
-              
-              <!-- Basic Auth -->
-              <StackPanel IsVisible="{Binding Auth.Type, Converter={StaticResource EnumEqualityConverter}, ConverterParameter=Basic}" Spacing="5">
-                  <TextBlock Text="Username" />
-                  <Border BorderBrush="Gray" BorderThickness="1" CornerRadius="3">
-                      <ae:TextEditor Document="{Binding Auth.Username, Converter={x:Static cv:StringToTextDocumentConverter.Instance}}" 
-                                     Height="20"
-                                     FontFamily="Cascadia Code,Consolas,Monospace"
-                                     ShowLineNumbers="False"
-                                     VerticalScrollBarVisibility="Hidden"
-                                     HorizontalScrollBarVisibility="Hidden" />
-                  </Border>
-                  <TextBlock Text="Password" />
-                  <Border BorderBrush="Gray" BorderThickness="1" CornerRadius="3">
-                      <ae:TextEditor Document="{Binding Auth.Password, Converter={x:Static cv:StringToTextDocumentConverter.Instance}}" 
-                                     Height="20"
-                                     FontFamily="Cascadia Code,Consolas,Monospace"
-                                     ShowLineNumbers="False"
-                                     VerticalScrollBarVisibility="Hidden"
-                                     HorizontalScrollBarVisibility="Hidden" />
-                  </Border>
-              </StackPanel>
-          </StackPanel>
-      </TabItem>
-      
-      <TabItem Header="Headers">
-        <DataGrid ItemsSource="{Binding Headers}" AutoGenerateColumns="False">
-            <DataGrid.Columns>
-                <DataGridCheckBoxColumn Header="Active" Binding="{Binding IsActive}"/>
-                <DataGridTextColumn Header="Key" Binding="{Binding Key}"/>
-                <DataGridTextColumn Header="Value" Binding="{Binding Value}"/>
-                <DataGridTextColumn Header="Description" Binding="{Binding Description}"/>
-            </DataGrid.Columns>
-        </DataGrid>
-      </TabItem>
-      
-      <TabItem Header="Body">
-        <ae:TextEditor Document="{Binding Body, Converter={x:Static cv:StringToTextDocumentConverter.Instance}}" 
-                       ShowLineNumbers="True"
-                       FontFamily="Cascadia Code,Consolas,Monospace" />
-      </TabItem>
-      
-      <TabItem Header="Scripts">
-          <Grid RowDefinitions="*, *" ColumnDefinitions="*, *" Margin="10">
-              <Grid Grid.Row="0" Grid.Column="0" RowDefinitions="Auto, *" Margin="0,0,5,5">
-                  <TextBlock Text="Pre-request Script" FontWeight="Bold" Margin="0,0,0,5" />
-                  <TextBox Text="{Binding Scripts.PreRequestScript}" AcceptsReturn="True" FontFamily="Consolas,Courier New,monospace" />
-              </Grid>
-              <Grid Grid.Row="0" Grid.Column="1" RowDefinitions="Auto, *" Margin="5,0,0,5">
-                  <TextBlock Text="Post-response Script" FontWeight="Bold" Margin="0,0,0,5" />
-                  <TextBox Text="{Binding Scripts.PostResponseScript}" AcceptsReturn="True" FontFamily="Consolas,Courier New,monospace" />
-              </Grid>
-          </Grid>
-      </TabItem>
+                    <!-- Bearer Token -->
+                    <StackPanel IsVisible="{Binding Auth.Type, Converter={StaticResource EnumEqualityConverter}, ConverterParameter=BearerToken}" 
+                                Spacing="6">
+                        <TextBlock Text="TOKEN" FontWeight="SemiBold" FontSize="11" Foreground="#969696" />
+                        <Border BorderBrush="#3E3E42" 
+                                BorderThickness="1" 
+                                CornerRadius="2"
+                                Background="#1E1E1E">
+                            <ae:TextEditor Document="{Binding Auth.Token, Converter={x:Static cv:StringToTextDocumentConverter.Instance}}" 
+                                           MinHeight="28"
+                                           Padding="8,6"
+                                           FontFamily="Cascadia Code,Consolas,Monospace"
+                                           FontSize="13"
+                                           Foreground="#CCCCCC"
+                                           Background="Transparent"
+                                           ShowLineNumbers="False"
+                                           VerticalScrollBarVisibility="Hidden"
+                                           HorizontalScrollBarVisibility="Auto" />
+                        </Border>
+                    </StackPanel>
+                    
+                    <!-- Basic Auth -->
+                    <StackPanel IsVisible="{Binding Auth.Type, Converter={StaticResource EnumEqualityConverter}, ConverterParameter=Basic}" 
+                                Spacing="12">
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="USERNAME" FontWeight="SemiBold" FontSize="11" Foreground="#969696" />
+                            <Border BorderBrush="#3E3E42" 
+                                    BorderThickness="1" 
+                                    CornerRadius="2"
+                                    Background="#1E1E1E">
+                                <ae:TextEditor Document="{Binding Auth.Username, Converter={x:Static cv:StringToTextDocumentConverter.Instance}}" 
+                                               MinHeight="28"
+                                               Padding="8,6"
+                                               FontFamily="Cascadia Code,Consolas,Monospace"
+                                               FontSize="13"
+                                               Foreground="#CCCCCC"
+                                               Background="Transparent"
+                                               ShowLineNumbers="False"
+                                               VerticalScrollBarVisibility="Hidden"
+                                               HorizontalScrollBarVisibility="Auto" />
+                            </Border>
+                        </StackPanel>
+                        <StackPanel Spacing="6">
+                            <TextBlock Text="PASSWORD" FontWeight="SemiBold" FontSize="11" Foreground="#969696" />
+                            <Border BorderBrush="#3E3E42" 
+                                    BorderThickness="1" 
+                                    CornerRadius="2"
+                                    Background="#1E1E1E">
+                                <ae:TextEditor Document="{Binding Auth.Password, Converter={x:Static cv:StringToTextDocumentConverter.Instance}}" 
+                                               MinHeight="28"
+                                               Padding="8,6"
+                                               FontFamily="Cascadia Code,Consolas,Monospace"
+                                               FontSize="13"
+                                               Foreground="#CCCCCC"
+                                               Background="Transparent"
+                                               ShowLineNumbers="False"
+                                               VerticalScrollBarVisibility="Hidden"
+                                               HorizontalScrollBarVisibility="Auto" />
+                            </Border>
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+        </TabItem>
+        
+        <TabItem Header="Headers">
+            <DataGrid ItemsSource="{Binding Headers}" 
+                      AutoGenerateColumns="False"
+                      Margin="0">
+                <DataGrid.Columns>
+                    <DataGridCheckBoxColumn Header="ACTIVE" Binding="{Binding IsActive}" Width="80"/>
+                    <DataGridTextColumn Header="KEY" Binding="{Binding Key}" Width="*"/>
+                    <DataGridTextColumn Header="VALUE" Binding="{Binding Value}" Width="2*"/>
+                    <DataGridTextColumn Header="DESCRIPTION" Binding="{Binding Description}" Width="2*"/>
+                </DataGrid.Columns>
+            </DataGrid>
+        </TabItem>
+        
+        <TabItem Header="Body">
+            <ae:TextEditor Document="{Binding Body, Converter={x:Static cv:StringToTextDocumentConverter.Instance}}" 
+                           ShowLineNumbers="True"
+                           FontFamily="Cascadia Code,Consolas,Monospace"
+                           FontSize="13"
+                           Foreground="#CCCCCC"
+                           Background="#1E1E1E"
+                           LineNumbersForeground="#858585" />
+        </TabItem>
+        
+        <TabItem Header="Scripts">
+            <Grid ColumnDefinitions="*, 1, *" Background="#1E1E1E">
+                <!-- Pre-request Script -->
+                <Grid Grid.Column="0" RowDefinitions="Auto, *">
+                    <Border Grid.Row="0" 
+                            Background="#252526" 
+                            BorderBrush="#3E3E42" 
+                            BorderThickness="0,0,0,1"
+                            Padding="12,8">
+                        <TextBlock Text="PRE-REQUEST SCRIPT" 
+                                   FontWeight="SemiBold" 
+                                   FontSize="11" 
+                                   Foreground="#969696" />
+                    </Border>
+                    <ae:TextEditor Grid.Row="1"
+                                   Document="{Binding Scripts.PreRequestScript, Converter={x:Static cv:StringToTextDocumentConverter.Instance}}"
+                                   ShowLineNumbers="True"
+                                   FontFamily="Cascadia Code,Consolas,Monospace"
+                                   FontSize="13"
+                                   Foreground="#CCCCCC"
+                                   Background="#1E1E1E"
+                                   LineNumbersForeground="#858585" />
+                </Grid>
+                
+                <!-- Vertical Separator -->
+                <Border Grid.Column="1" Background="#3E3E42" />
+                
+                <!-- Post-response Script -->
+                <Grid Grid.Column="2" RowDefinitions="Auto, *">
+                    <Border Grid.Row="0" 
+                            Background="#252526" 
+                            BorderBrush="#3E3E42" 
+                            BorderThickness="0,0,0,1"
+                            Padding="12,8">
+                        <TextBlock Text="POST-RESPONSE SCRIPT" 
+                                   FontWeight="SemiBold" 
+                                   FontSize="11" 
+                                   Foreground="#969696" />
+                    </Border>
+                    <ae:TextEditor Grid.Row="1"
+                                   Document="{Binding Scripts.PostResponseScript, Converter={x:Static cv:StringToTextDocumentConverter.Instance}}"
+                                   ShowLineNumbers="True"
+                                   FontFamily="Cascadia Code,Consolas,Monospace"
+                                   FontSize="13"
+                                   Foreground="#CCCCCC"
+                                   Background="#1E1E1E"
+                                   LineNumbersForeground="#858585" />
+                </Grid>
+            </Grid>
+        </TabItem>
     </TabControl>
 
-    <!-- Splitter -->
-    <GridSplitter Grid.Row="2" Background="Gray" ResizeDirection="Rows" IsVisible="{Binding Response, Converter={x:Static adc:ObjectConverters.IsNotNull}}" />
+    <!-- Horizontal Splitter -->
+    <Border Grid.Row="2" 
+            Background="#3E3E42" 
+            IsVisible="{Binding Response, Converter={x:Static adc:ObjectConverters.IsNotNull}}"
+            Cursor="SizeNorthSouth">
+        <GridSplitter Background="Transparent" 
+                      ResizeDirection="Rows" 
+                      HorizontalAlignment="Stretch" 
+                      VerticalAlignment="Stretch" />
+    </Border>
 
-    <!-- Response View -->
     <!-- Response Area -->
-    <Grid Grid.Row="3" Margin="10,0,10,10">
+    <Grid Grid.Row="3" IsVisible="{Binding Response, Converter={x:Static adc:ObjectConverters.IsNotNull}}">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="250" MinWidth="150" MaxWidth="500"/>
-            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="4"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <!-- History List -->
-        <Border Grid.Column="0" BorderBrush="Gray" BorderThickness="0,0,1,0" Margin="0,0,5,0" IsVisible="{Binding IsHistoryVisible}">
+        <!-- History Panel -->
+        <Border Grid.Column="0" 
+                Background="#252526"
+                BorderBrush="#3E3E42" 
+                BorderThickness="0,0,1,0"
+                IsVisible="{Binding IsHistoryVisible}">
             <Grid RowDefinitions="Auto, *">
-                <Grid Grid.Row="0" ColumnDefinitions="*, Auto" Margin="0,0,5,5">
-                    <TextBlock Grid.Column="0" Text="History" FontWeight="Bold" VerticalAlignment="Center"/>
-                    <Button Grid.Column="1" Command="{Binding ToggleHistoryCommand}" Content="✕" 
-                            Background="Transparent" BorderThickness="0" Padding="5,0" ToolTip.Tip="Hide History"/>
-                </Grid>
-                <ListBox Grid.Row="1" ItemsSource="{Binding History}" SelectedItem="{Binding SelectedHistoryItem}">
+                <Border Grid.Row="0" 
+                        Background="#2D2D30"
+                        BorderBrush="#3E3E42"
+                        BorderThickness="0,0,0,1"
+                        Padding="12,8">
+                    <Grid ColumnDefinitions="*, Auto">
+                        <TextBlock Grid.Column="0" 
+                                   Text="HISTORY" 
+                                   FontWeight="SemiBold" 
+                                   FontSize="11" 
+                                   Foreground="#969696"
+                                   VerticalAlignment="Center"/>
+                        <Button Grid.Column="1" 
+                                Command="{Binding ToggleHistoryCommand}" 
+                                Content="✕" 
+                                Background="Transparent" 
+                                Foreground="#969696"
+                                BorderThickness="0" 
+                                Padding="6,2"
+                                ToolTip.Tip="Hide History">
+                            <Button.Styles>
+                                <Style Selector="Button:pointerover">
+                                    <Setter Property="Background" Value="#3E3E42" />
+                                    <Setter Property="Foreground" Value="#FFFFFF" />
+                                </Style>
+                            </Button.Styles>
+                        </Button>
+                    </Grid>
+                </Border>
+                
+                <ListBox Grid.Row="1" 
+                         ItemsSource="{Binding History}" 
+                         SelectedItem="{Binding SelectedHistoryItem}"
+                         Background="Transparent"
+                         Padding="4">
+                    <ListBox.Styles>
+                        <Style Selector="ListBoxItem">
+                            <Setter Property="Padding" Value="8,6" />
+                            <Setter Property="Margin" Value="2" />
+                        </Style>
+                        <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+                            <Setter Property="Background" Value="#37373D" />
+                        </Style>
+                        <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
+                            <Setter Property="Background" Value="#2A2D2E" />
+                        </Style>
+                    </ListBox.Styles>
                     <ListBox.ItemTemplate>
                         <DataTemplate>
-                            <StackPanel Spacing="2">
-                                <StackPanel Orientation="Horizontal" Spacing="5">
-                                    <TextBlock Text="{Binding StatusCode}" FontWeight="Bold" 
+                            <StackPanel Spacing="4">
+                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                    <TextBlock Text="{Binding StatusCode}" 
+                                               FontWeight="Bold" 
+                                               FontSize="13"
                                                Foreground="{Binding IsSuccess, Converter={StaticResource BoolToBrushConverter}}"/>
-                                    <TextBlock Text="{Binding Timestamp, StringFormat='HH:mm:ss'}" Opacity="0.7" FontSize="11" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding Timestamp, StringFormat='HH:mm:ss'}" 
+                                               Foreground="#858585" 
+                                               FontSize="11" 
+                                               VerticalAlignment="Center"/>
                                 </StackPanel>
-                                <StackPanel Orientation="Horizontal" Spacing="5" Opacity="0.7" TextElement.FontSize="11">
+                                <StackPanel Orientation="Horizontal" 
+                                            Spacing="8" 
+                                            TextElement.FontSize="11"
+                                            TextElement.Foreground="#858585">
                                     <TextBlock Text="{Binding Duration}"/>
+                                    <TextBlock Text="•"/>
                                     <TextBlock Text="{Binding Size}"/>
                                 </StackPanel>
                             </StackPanel>
@@ -183,8 +452,17 @@
             </Grid>
         </Border>
 
-        <!-- Splitter -->
-        <GridSplitter Grid.Column="1" Width="5" ResizeBehavior="PreviousAndNext" Background="Transparent" IsVisible="{Binding IsHistoryVisible}"/>
+        <!-- Vertical Splitter -->
+        <Border Grid.Column="1" 
+                Background="#3E3E42"
+                IsVisible="{Binding IsHistoryVisible}"
+                Cursor="SizeWestEast">
+            <GridSplitter Width="4"
+                          Background="Transparent"
+                          ResizeBehavior="PreviousAndNext"
+                          HorizontalAlignment="Stretch" 
+                          VerticalAlignment="Stretch" />
+        </Border>
 
         <!-- Response View -->
         <ContentControl Grid.Column="2" Content="{Binding Response}" />

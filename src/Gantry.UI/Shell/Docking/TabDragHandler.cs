@@ -130,12 +130,7 @@ public class TabDragHandler
             }
 
             // Reorder tabs
-            _tabs.RemoveAt(_draggedIndex);
-
-            // Clamp to valid range
-            adjustedDropIndex = Math.Max(0, Math.Min(adjustedDropIndex, _tabs.Count));
-
-            _tabs.Insert(adjustedDropIndex, _draggedTab);
+            _tabs.Move(_draggedIndex, adjustedDropIndex);
         }
 
         ResetDrag();
@@ -155,16 +150,27 @@ public class TabDragHandler
             if (container is Control itemControl)
             {
                 var bounds = itemControl.Bounds;
-                var relativePoint = position;
-
-                // Check if pointer is over this item
-                if (relativePoint.X >= bounds.X && relativePoint.X <= bounds.X + bounds.Width)
+                
+                // Check if pointer is within the horizontal bounds of the item
+                // We use a slightly wider hit test to make it easier to drop between items
+                if (position.X >= bounds.X && position.X <= bounds.X + bounds.Width)
                 {
-                    // Determine if we should insert before or after
                     var midPoint = bounds.X + bounds.Width / 2;
-                    return relativePoint.X < midPoint ? i : i + 1;
+                    // If on the left half, insert at current index (before item)
+                    // If on the right half, insert at next index (after item)
+                    return position.X < midPoint ? i : i + 1;
                 }
             }
+        }
+
+        // Handle edge cases
+        if (_listBox.ItemCount > 0)
+        {
+            var first = _listBox.ContainerFromIndex(0) as Control;
+            var last = _listBox.ContainerFromIndex(_listBox.ItemCount - 1) as Control;
+
+            if (first != null && position.X < first.Bounds.X) return 0;
+            if (last != null && position.X > last.Bounds.X + last.Bounds.Width) return _listBox.ItemCount;
         }
 
         return _draggedIndex; // No change if not found

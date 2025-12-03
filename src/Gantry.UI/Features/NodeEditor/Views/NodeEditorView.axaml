@@ -17,7 +17,8 @@
     </UserControl.Styles>
 
   <Grid>
-    <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="10" ZIndex="100">
+    <StackPanel Orientation="Horizontal" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="10" ZIndex="100" Spacing="10">
+        <Button Command="{Binding SaveCommand}" Content="Save" Background="#007ACC" Foreground="White" />
         <Button Command="{Binding RunGraphCommand}" Content="Run Graph" Background="Green" Foreground="White" />
     </StackPanel>
 

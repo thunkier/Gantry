@@ -150,9 +150,8 @@ public partial class NodeEditorView : UserControl
 
     private void DragOver(object? sender, DragEventArgs e)
     {
-        // Note: Using Data (IDataObject) as DataTransfer might not have Contains directly or might behave differently.
-        // But assuming standard replacement:
-        if (e.Data.Contains("Context"))
+        var text = e.DataTransfer.TryGetText();
+        if (text != null && text.Contains("|request:"))
         {
             e.DragEffects = DragDropEffects.Copy;
         }
@@ -164,10 +163,19 @@ public partial class NodeEditorView : UserControl
 
     private void Drop(object? sender, DragEventArgs e)
     {
-        if (DataContext is NodeEditorViewModel vm && e.Data.Get("Context") is RequestItemViewModel requestVm)
+        if (DataContext is NodeEditorViewModel vm)
         {
-            var position = e.GetPosition(this);
-            vm.DropCommand.Execute(new NodeDropArgs(requestVm, position.X, position.Y));
+            var text = e.DataTransfer.TryGetText();
+            if (text != null && text.Contains("|request:"))
+            {
+                var parts = text.Split(new[] { "|request:" }, StringSplitOptions.None);
+                if (parts.Length > 1)
+                {
+                    var path = parts[1];
+                    var position = e.GetPosition(this);
+                    vm.AddRequestFromPath(path, position.X, position.Y);
+                }
+            }
         }
     }
 

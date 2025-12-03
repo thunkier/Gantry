@@ -28,7 +28,7 @@ public partial class SidebarViewModel : ObservableObject
 {
     private readonly FileSystemCollectionRepository _repository = new();
     private readonly WorkspaceService _workspaceService;
-    private readonly CollectionService _collectionService = new();
+    private readonly CollectionService _collectionService;
     private readonly CollectionImportExportService _importExportService = new();
 
     [ObservableProperty]
@@ -69,12 +69,28 @@ public partial class SidebarViewModel : ObservableObject
     public SidebarViewModel(WorkspaceService workspaceService)
     {
         _workspaceService = workspaceService;
+        _collectionService = new CollectionService(_workspaceService);
         _sourceControl = new SourceControlViewModel(new GitService(), _workspaceService);
 
         if (!string.IsNullOrEmpty(_workspaceService.CurrentWorkspace?.Path))
         {
             LoadCollections(_workspaceService.CurrentWorkspace.Path);
         }
+
+        _workspaceService.FileSystemChanged += OnFileSystemChanged;
+    }
+
+    private void OnFileSystemChanged(object? sender, EventArgs e)
+    {
+        Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            if (!string.IsNullOrEmpty(_workspaceService.CurrentWorkspace?.Path))
+            {
+                // TODO: Optimize this to only reload changed parts if possible
+                // For now, full reload to ensure consistency
+                LoadCollections(_workspaceService.CurrentWorkspace.Path);
+            }
+        });
     }
 
     [RelayCommand]
@@ -86,7 +102,7 @@ public partial class SidebarViewModel : ObservableObject
         // Add sub-collections as top-level folders
         foreach (var sub in rootCollection.SubCollections)
         {
-            var vm = new CollectionViewModel(sub) { IsRoot = true };
+            var vm = new CollectionViewModel(sub, _workspaceService) { IsRoot = true };
             Collections.Add(vm);
         }
 
@@ -100,7 +116,9 @@ public partial class SidebarViewModel : ObservableObject
         NodeTasks.Clear();
         foreach (var graph in rootCollection.NodeGraphs)
         {
-            NodeTasks.Add(new NodeTaskViewModel(graph, _workspaceService, SelectRequestAsync));
+            var vm = new NodeTaskViewModel(graph, _workspaceService, SelectRequestAsync);
+            NodeTasks.Add(vm);
+            Collections.Add(vm);
         }
     }
 
@@ -360,7 +378,7 @@ public partial class SidebarViewModel : ObservableObject
                     }
                     else
                     {
-                        var vm = new CollectionViewModel(collection) { IsRoot = true };
+                        var vm = new CollectionViewModel(collection, _workspaceService) { IsRoot = true };
                         Collections.Add(vm);
                     }
                 }

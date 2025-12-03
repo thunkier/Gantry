@@ -139,9 +139,17 @@ public partial class Sidebar : UserControl
 
             // Create drag data using the new DataTransfer API
             // We use a simple text marker since the actual item is tracked in the ViewModel
+            // For external drops (like NodeEditor), we include the path
             var dragData = new DataTransfer();
             var dataItem = new DataTransferItem();
-            dataItem.SetText("tree-item");
+            
+            var text = "tree-item";
+            if (item is RequestItemViewModel req)
+            {
+                text += $"|request:{req.Model.Path}";
+            }
+            dataItem.SetText(text);
+            
             dragData.Add(dataItem);
 
             // Start async drag operation
@@ -151,7 +159,7 @@ public partial class Sidebar : UserControl
                 {
                     await Avalonia.Threading.Dispatcher.UIThread.InvokeAsync(async () =>
                     {
-                        await DragDrop.DoDragDropAsync(e, dragData, DragDropEffects.Move);
+                        await DragDrop.DoDragDropAsync(e, dragData, DragDropEffects.Move | DragDropEffects.Copy);
                         ResetDragState();
                     });
                 }
@@ -261,8 +269,11 @@ public partial class Sidebar : UserControl
             {
                 // Verify it's our drag operation by checking the text content
                 var text = e.DataTransfer.TryGetText();
-                if (text == "tree-item")
+                if (text != null && text.StartsWith("tree-item"))
+                {
+                    vm.DropCommand.Execute(target);
                     ResetDragState();
+                }
             }
         }
     }

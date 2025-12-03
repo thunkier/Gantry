@@ -10,18 +10,26 @@ public partial class CollectionViewModel : ObservableObject, ITreeItemViewModel
 {
     public Collection Model { get; }
 
-    public CollectionViewModel(Collection model)
+    private readonly Gantry.Infrastructure.Services.WorkspaceService _workspaceService;
+
+    public CollectionViewModel(Collection model, Gantry.Infrastructure.Services.WorkspaceService workspaceService)
     {
         Model = model;
+        _workspaceService = workspaceService;
 
         foreach (var sub in model.SubCollections)
         {
-            Children.Add(new CollectionViewModel(sub));
+            Children.Add(new CollectionViewModel(sub, _workspaceService));
         }
 
         foreach (var req in model.Requests)
         {
             Children.Add(new RequestItemViewModel(req));
+        }
+
+        foreach (var graph in model.NodeGraphs)
+        {
+            Children.Add(new NodeTaskViewModel(graph, _workspaceService));
         }
 
         Auth = new AuthSettingsViewModel(model.Auth);

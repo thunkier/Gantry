@@ -7,6 +7,7 @@ public class NodeGraph : Gantry.Core.Domain.Settings.ISettingsContainer
 {
     public string Name { get; set; } = "New Graph";
     public string Path { get; set; } = string.Empty;
+    [System.Text.Json.Serialization.JsonIgnore]
     public Gantry.Core.Domain.Settings.ISettingsContainer? Parent { get; set; }
 
     public Gantry.Core.Domain.Settings.AuthSettings Auth { get; set; } = new();

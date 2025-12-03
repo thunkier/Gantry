@@ -35,11 +35,41 @@ public class FileSystemCollectionRepository
 
         foreach (var f in Directory.GetFiles(path).Where(f => f.EndsWith(".json", StringComparison.OrdinalIgnoreCase) || f.EndsWith(".gantry", StringComparison.OrdinalIgnoreCase)))
         {
-            if (TryLoadJson<Collection>(f, _ => true, sub => { sub.Parent = c; FixParents(sub); }) is { } sub) { c.SubCollections.Add(sub); continue; }
-            if (TryLoadJson<RequestItem>(f, _ => true, req => req.Parent = c) is { } req) { c.Requests.Add(req); continue; }
-            if (TryLoadJson<NodeGraph>(f, s => s.Contains("\"Nodes\""), g => g.Parent = c) is { } graph) { c.NodeGraphs.Add(graph); }
+            // 1. Try NodeGraph (most specific structure)
+            if (TryLoadJson<NodeGraph>(f, s => s.Contains("\"Nodes\""), g => g.Parent = c) is { } graph) 
+            { 
+                c.NodeGraphs.Add(graph); 
+                continue; 
+            }
+
+            // 2. Try RequestItem
+            if (TryLoadJson<RequestItem>(f, s => (s.Contains("\"Request\"") || s.Contains("\"Method\"")) && !s.Contains("\"Nodes\""), req => req.Parent = c) is { } req) 
+            { 
+                c.Requests.Add(req); 
+                continue; 
+            }
+
+            // 3. Try Collection (least specific, but requires some collection-like properties to avoid false positives)
+            if (TryLoadJson<Collection>(f, s => s.Contains("\"Requests\":") || s.Contains("\"SubCollections\":") || s.Contains("\"NodeGraphs\":"), sub => { sub.Parent = c; FixParents(sub); }) is { } sub) 
+            { 
+                c.SubCollections.Add(sub); 
+                continue; 
+            }
         }
         return c;
+    }
+
+    public RequestItem? LoadRequest(string path)
+    {
+        if (!File.Exists(path)) return null;
+        // Try loading as a bundle first if it's a directory, but here we expect a file path usually.
+        // If the path is a directory ending in .req, it's a bundle.
+        if (Directory.Exists(path) && path.EndsWith(".req", StringComparison.OrdinalIgnoreCase))
+        {
+            return _bundles.LoadBundle(path, null);
+        }
+        
+        return TryLoadJson<RequestItem>(path, _ => true);
     }
 
     public void SaveRequest(RequestItem item)

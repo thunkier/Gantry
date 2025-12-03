@@ -11,22 +11,119 @@
 
     <Menu Grid.Column="1" Margin="10,0" VerticalAlignment="Center">
       <MenuItem Header="File">
+        <MenuItem Header="New Request" Command="{Binding NewRequestCommand}" InputGesture="Ctrl+N" />
+        <MenuItem Header="New Collection" Command="{Binding NewCollectionCommand}" />
+       <MenuItem Header="New Node Task" Command="{Binding NewNodeTaskCommand}" />
+        <Separator />
         <MenuItem Header="New Workspace" Command="{Binding CreateWorkspaceCommand}" />
         <MenuItem Header="New Window" Command="{Binding NewWindowCommand}" />
-        <MenuItem Header="Open Folder..." Command="{Binding OpenFolderCommand}" />
+        <MenuItem Header="Open Folder..." Command="{Binding OpenFolderCommand}" InputGesture="Ctrl+O" />
         <MenuItem Header="Import from Git..." Command="{Binding ImportFromGitCommand}" />
+        <Separator />
+        <MenuItem Header="Save All" Command="{Binding SaveAllCommand}" InputGesture="Ctrl+Shift+S" />
+        <Separator />
+        <MenuItem Header="Close All Tabs" Command="{Binding CloseAllTabsCommand}" />
       </MenuItem>
     </Menu>
 
+    <!-- Search Bar with Popup -->
     <Border Grid.Column="2" MaxWidth="400" Margin="10,5" CornerRadius="4" Background="{DynamicResource SystemControlBackgroundBaseLowBrush}">
       <Grid ColumnDefinitions="Auto, *">
-        <TextBlock Grid.Column="0" Text="🔍" VerticalAlignment="Center" Margin="8,0,0,0" Opacity="0.5"/>
-        <TextBox Grid.Column="1" Watermark="Search..." BorderThickness="0" Background="Transparent" VerticalAlignment="Center" />
+        <PathIcon Grid.Column="0" 
+                  Data="M15.5,14L20.5,19L19,20.5L14,15.5V14.71L13.73,14.43C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.43,13.73L14.71,14H15.5M9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14Z"
+                  Width="16" 
+                  Height="16"
+                  VerticalAlignment="Center" 
+                  Margin="8,0,4,0" 
+                  Foreground="#858585" />
+        <TextBox Grid.Column="1"
+                 x:Name="SearchBox"
+                 Text="{Binding Search.SearchText}"
+                 Watermark="Search..." 
+                 BorderThickness="0" 
+                 Background="Transparent" 
+                 VerticalAlignment="Center"
+                 Padding="0,6"
+                 GotFocus="OnSearchBoxGotFocus" />
+        
+        <!-- Search Results Popup -->
+        <Popup Grid.Column="1"
+               IsOpen="{Binding Search.IsPopupOpen}"
+               PlacementTarget="{Binding #SearchBox}"
+               Placement="Bottom"
+               IsLightDismissEnabled="True"
+               Width="400">
+          <Border Background="#252526"
+                  BorderBrush="#3E3E42"
+                  BorderThickness="1"
+                  CornerRadius="4"
+                  Padding="0"
+                  MaxHeight="400">
+            <ListBox ItemsSource="{Binding Search.SearchResults}"
+                     SelectedItem="{Binding Search.SelectedResult}"
+                     Background="Transparent"
+                     BorderThickness="0">
+              <ListBox.Styles>
+                <Style Selector="ListBoxItem">
+                  <Setter Property="Padding" Value="12,8" />
+                  <Setter Property="Margin" Value="0" />
+                </Style>
+                <Style Selector="ListBoxItem:selected /template/ ContentPresenter">
+                  <Setter Property="Background" Value="#37373D" />
+                </Style>
+                <Style Selector="ListBoxItem:pointerover /template/ ContentPresenter">
+                  <Setter Property="Background" Value="#2A2D2E" />
+                </Style>
+              </ListBox.Styles>
+              <ListBox.ItemTemplate>
+                <DataTemplate>
+                  <StackPanel Spacing="4">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                      <TextBlock Text="{Binding TypeIcon}" 
+                                 FontSize="14"
+                                 VerticalAlignment="Center" />
+                      <TextBlock Text="{Binding Name}" 
+                                 FontSize="13"
+                                 Foreground="#CCCCCC"
+                                 VerticalAlignment="Center" />
+                    </StackPanel>
+                    <TextBlock Text="{Binding Path}" 
+                               FontSize="11"
+                               Foreground="#858585"
+                               Margin="22,0,0,0" />
+                  </StackPanel>
+                </DataTemplate>
+              </ListBox.ItemTemplate>
+            </ListBox>
+          </Border>
+        </Popup>
       </Grid>
     </Border>
 
+    <!-- Settings Button with Flyout -->
     <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="5" Margin="10,0">
-      <Button Content="⚙" Command="{Binding OpenSettingsCommand}" Background="Transparent" BorderThickness="0" Padding="8" />
+      <Button Background="Transparent" BorderThickness="0" Padding="8">
+        <PathIcon Data="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.67 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"
+                  Width="20"
+                  Height="20"
+                  Foreground="#CCCCCC" />
+        <Button.Flyout>
+          <Flyout Placement="Bottom" ShowMode="TransientWithDismissOnPointerMoveAway">
+            <Border Width="500" Height="600" Background="#252526" BorderBrush="#3E3E42" BorderThickness="1" CornerRadius="4">
+              <Grid RowDefinitions="Auto,*">
+                <TextBlock Grid.Row="0" Text="Settings" FontSize="16" FontWeight="Bold" Margin="20,20,20,10" />
+                <ScrollViewer Grid.Row="1">
+                  <StackPanel Spacing="10" Margin="20,0,20,20">
+                    <TextBlock Text="Application settings" Opacity="0.7" FontSize="13" />
+                    <Separator Background="#3E3E42" />
+                    <!-- Request settings and app settings will be integrated here -->
+                  </StackPanel>
+                </ScrollViewer>
+              </Grid>
+            </Border>
+          </Flyout>
+        </Button.Flyout>
+      </Button>
     </StackPanel>
 
     <StackPanel Grid.Column="4" x:Name="WindowsCaptionButtons" Orientation="Horizontal" IsVisible="False">

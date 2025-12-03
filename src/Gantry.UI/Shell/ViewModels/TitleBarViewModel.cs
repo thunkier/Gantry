@@ -19,6 +19,18 @@ public partial class TitleBarViewModel : ObservableObject
     public Func<Task<string?>>? OpenFolderDialog { get; set; }
     public Func<Task<string?>>? ImportGitDialog { get; set; }
 
+    // Events for new menu actions
+    public event EventHandler? NewRequestRequested;
+    public event EventHandler? NewCollectionRequested;
+    public event EventHandler? NewNodeTaskRequested;
+    public event EventHandler? SaveAllRequested;
+    public event EventHandler? CloseAllTabsRequested;
+
+    // Event for search results
+    public event EventHandler<SearchResultItem>? SearchItemSelected;
+
+    public SearchViewModel? Search { get; private set; }
+
     public Guid InstanceId { get; } = Guid.NewGuid();
 
     public TitleBarViewModel(WorkspaceService workspaceService)
@@ -26,6 +38,25 @@ public partial class TitleBarViewModel : ObservableObject
         System.Diagnostics.Debug.WriteLine($"TitleBarViewModel Created: {InstanceId}");
         _workspaceService = workspaceService;
         _workspaceService.WorkspaceChanged += OnWorkspaceChanged;
+        
+        // Initialize Search with a placeholder to avoid binding errors
+        Search = new SearchViewModel(new SidebarViewModel(workspaceService));
+    }
+
+    public void InitializeSearch(SidebarViewModel sidebar)
+    {
+        // Replace placeholder Search with the actual one using the real sidebar
+        if (Search != null)
+        {
+            Search.ItemSelected -= OnSearchItemSelected;
+        }
+        Search = new SearchViewModel(sidebar);
+        Search.ItemSelected += OnSearchItemSelected;
+    }
+
+    private void OnSearchItemSelected(object? sender, SearchResultItem item)
+    {
+        SearchItemSelected?.Invoke(this, item);
     }
 
     // Fallback for previewer
@@ -125,5 +156,35 @@ public partial class TitleBarViewModel : ObservableObject
                 await dialog.ShowDialog(desktop.MainWindow);
             }
         }
+    }
+
+    [RelayCommand]
+    private void NewRequest()
+    {
+        NewRequestRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    [RelayCommand]
+    private void NewCollection()
+    {
+        NewCollectionRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    [RelayCommand]
+    private void NewNodeTask()
+    {
+        NewNodeTaskRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    [RelayCommand]
+    private void SaveAll()
+    {
+        SaveAllRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    [RelayCommand]
+    private void CloseAllTabs()
+    {
+        CloseAllTabsRequested?.Invoke(this, EventArgs.Empty);
     }
 }

@@ -126,7 +126,11 @@ public partial class DockPaneViewModel : ObservableObject
     {
         if (e.Action == System.Collections.Specialized.NotifyCollectionChangedAction.Remove)
         {
-            if (e.OldItems != null && ActiveTab != null && e.OldItems.Contains(ActiveTab))
+            if (Tabs.Count == 0)
+            {
+                ActiveTab = null;
+            }
+            else if (e.OldItems != null && ActiveTab != null && e.OldItems.Contains(ActiveTab))
             {
                 // Active tab was removed, select another one
                 ActiveTab = Tabs.LastOrDefault();

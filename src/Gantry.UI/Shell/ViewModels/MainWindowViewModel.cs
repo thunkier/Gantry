@@ -62,10 +62,10 @@ public partial class MainWindowViewModel : ObservableObject
 
         if (workspace != null)
         {
-            if (CountAllTabs() == 0)
-            {
-                AddTab(new RequestViewModel(_httpService, _workspaceService, _variableService));
-            }
+            // if (CountAllTabs() == 0)
+            // {
+            //     AddTab(new RequestViewModel(_httpService, _workspaceService, _variableService));
+            // }
 
             _sidebar.LoadCollectionsCommand.Execute(workspace.Path);
         }
@@ -111,10 +111,10 @@ public partial class MainWindowViewModel : ObservableObject
             tab.CloseRequested -= OnTabCloseRequested;
             RemoveTabFromDock(tab);
 
-            if (CountAllTabs() == 0)
-            {
-                AddTab(new RequestViewModel(_httpService, _workspaceService, _variableService));
-            }
+            // if (CountAllTabs() == 0)
+            // {
+            //     AddTab(new RequestViewModel(_httpService, _workspaceService, _variableService));
+            // }
         }
     }
 

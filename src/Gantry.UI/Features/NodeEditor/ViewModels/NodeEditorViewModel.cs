@@ -202,4 +202,13 @@ public partial class NodeEditorViewModel : ObservableObject
             }
         }
     }
+    public void AddRequestFromPath(string path, double x, double y)
+    {
+        var request = _workspaceService.Repository.LoadRequest(path);
+        if (request != null)
+        {
+            var node = new RequestNodeViewModel(request, x, y);
+            Nodes.Add(node);
+        }
+    }
 }

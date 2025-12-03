@@ -25,6 +25,7 @@ public class WorkspaceService
         if (!Directory.Exists(gantryDir)) Directory.CreateDirectory(gantryDir);
 
         _configPath = Path.Combine(gantryDir, "session.json");
+        FileSystemChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public async Task InitializeAsync()
@@ -37,6 +38,32 @@ public class WorkspaceService
         {
             OpenWorkspace(_sessionState.LastActiveWorkspacePath);
         }
+    }
+
+    private FileSystemWatcher? _watcher;
+    public event EventHandler? FileSystemChanged;
+
+    private void SetupWatcher(string path)
+    {
+        _watcher?.Dispose();
+        _watcher = new FileSystemWatcher(path)
+        {
+            NotifyFilter = NotifyFilters.FileName | NotifyFilters.DirectoryName | NotifyFilters.LastWrite,
+            IncludeSubdirectories = true,
+            EnableRaisingEvents = true
+        };
+
+        _watcher.Created += OnFileSystemChanged;
+        _watcher.Deleted += OnFileSystemChanged;
+        _watcher.Renamed += OnFileSystemChanged;
+        // _watcher.Changed += OnFileSystemChanged; // Often too noisy
+    }
+
+    private void OnFileSystemChanged(object sender, FileSystemEventArgs e)
+    {
+        // Debounce or throttle could be added here if needed
+        // For now, just notify on UI thread if possible, or let ViewModel handle marshalling
+        FileSystemChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public void OpenWorkspace(string path)
@@ -64,6 +91,9 @@ public class WorkspaceService
         // 4. Persist and Notify
         SaveState();
         WorkspaceChanged?.Invoke(this, CurrentWorkspace);
+        
+        // 5. Setup File Watcher
+        SetupWatcher(path);
     }
 
     public void ClearHistory()
