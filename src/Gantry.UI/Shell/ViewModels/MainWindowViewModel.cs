@@ -23,6 +23,7 @@ public partial class MainWindowViewModel : ObservableObject
 
     public TitleBarViewModel TitleBar { get; }
     public WelcomeViewModel Welcome { get; }
+    public SearchViewModel Search { get; }
 
     [ObservableProperty]
     private DockLayoutViewModel _dockLayout = new();
@@ -39,6 +40,19 @@ public partial class MainWindowViewModel : ObservableObject
         TitleBar = new TitleBarViewModel(_workspaceService);
         _sidebar = new SidebarViewModel(_workspaceService);
         Welcome = new WelcomeViewModel(_workspaceService);
+        Search = new SearchViewModel(_sidebar);
+
+        TitleBar.Search = Search;
+
+        // Inject commands into TitleBar
+        TitleBar.NewRequestCommand = NewRequestCommand;
+        TitleBar.NewCollectionCommand = NewCollectionCommand;
+        TitleBar.NewNodeTaskCommand = NewNodeTaskCommand;
+        TitleBar.SaveAllCommand = SaveAllCommand;
+        TitleBar.CloseAllTabsCommand = CloseAllTabsCommand;
+
+        // Subscribe to search results
+        Search.ItemSelected += OnSearchItemSelected;
 
         _workspaceService.WorkspaceChanged += OnWorkspaceChanged;
 
@@ -46,142 +60,114 @@ public partial class MainWindowViewModel : ObservableObject
         _sidebar.CollectionOpened += OnCollectionOpened;
         _sidebar.NodeEditorOpened += OnNodeEditorOpened;
 
-        _ = InitializeAsync();
+        InitializeAsync();
     }
 
-    public MainWindowViewModel() : this(new WorkspaceService(), new Gantry.Infrastructure.Network.HttpService(), new Gantry.Infrastructure.Services.VariableService()) { }
+    public SidebarViewModel Sidebar => _sidebar;
 
-    private async Task InitializeAsync()
+    private void InitializeAsync()
     {
-        await _workspaceService.InitializeAsync();
+        if (_workspaceService.CurrentWorkspace != null)
+        {
+            CurrentWorkspace = _workspaceService.CurrentWorkspace;
+            _sidebar.LoadCollections(_workspaceService.CurrentWorkspace.Path);
+        }
     }
 
     private void OnWorkspaceChanged(object? sender, Workspace? workspace)
     {
         CurrentWorkspace = workspace;
-
         if (workspace != null)
         {
-            // if (CountAllTabs() == 0)
-            // {
-            //     AddTab(new RequestViewModel(_httpService, _workspaceService, _variableService));
-            // }
-
-            _sidebar.LoadCollectionsCommand.Execute(workspace.Path);
+            _sidebar.LoadCollections(workspace.Path);
         }
     }
 
-    public SidebarViewModel Sidebar => _sidebar;
-
-    private void OnRequestOpened(object? sender, Gantry.Core.Domain.Collections.RequestItem e)
+    private void OnRequestOpened(object? sender, Core.Domain.Collections.RequestItem request)
     {
-        AddTab(new RequestViewModel(_httpService, _workspaceService, _variableService, e));
+        AddTab(new RequestViewModel(_httpService, _workspaceService, _variableService, request));
     }
 
-    private void OnCollectionOpened(object? sender, CollectionViewModel e)
+    private void OnCollectionOpened(object? sender, CollectionViewModel collection)
     {
-        AddTab(new CollectionTabViewModel(e));
+        AddTab(new CollectionTabViewModel(collection));
     }
 
-    private void OnNodeEditorOpened(object? sender, NodeTaskViewModel task)
+    private void OnNodeEditorOpened(object? sender, NodeTaskViewModel nodeTask)
     {
-        var existing = FindTab<NodeEditorTabViewModel>(t => t.NodeTask == task);
+        AddTab(new NodeEditorTabViewModel(nodeTask));
+    }
 
-        if (existing != null)
+    private void OnSearchItemSelected(object? sender, SearchResultItem item)
+    {
+        switch (item.Type)
         {
-            // Logic to focus the tab would go here
-        }
-        else
-        {
-            AddTab(new NodeEditorTabViewModel(task));
+            case SearchResultType.Request:
+                if (item.Data is Core.Domain.Collections.RequestItem request)
+                {
+                    AddTab(new RequestViewModel(_httpService, _workspaceService, _variableService, request));
+                }
+                break;
+
+            case SearchResultType.Collection:
+                if (item.Data is CollectionViewModel collection)
+                {
+                    AddTab(new CollectionTabViewModel(collection));
+                }
+                break;
+
+            case SearchResultType.NodeTask:
+                if (item.Data is NodeTaskViewModel nodeTask)
+                {
+                    AddTab(new NodeEditorTabViewModel(nodeTask));
+                }
+                break;
         }
     }
 
     [RelayCommand]
     private void AddTab(TabViewModel tab)
     {
-        DockLayout.AddTab(tab);
-        tab.CloseRequested += OnTabCloseRequested;
+        DockLayout.RootPane.Tabs.Add(tab);
+        DockLayout.RootPane.ActiveTab = tab;
     }
 
-    private void OnTabCloseRequested(object? sender, EventArgs e)
+    [RelayCommand]
+    private void NewRequest()
     {
-        if (sender is TabViewModel tab)
-        {
-            tab.CloseRequested -= OnTabCloseRequested;
-            RemoveTabFromDock(tab);
-
-            // if (CountAllTabs() == 0)
-            // {
-            //     AddTab(new RequestViewModel(_httpService, _workspaceService, _variableService));
-            // }
-        }
+        AddTab(new RequestViewModel(_httpService, _workspaceService, _variableService));
     }
 
-    private void RemoveTabFromDock(TabViewModel tab)
+    [RelayCommand]
+    private void NewCollection()
     {
-        var pane = FindPane(DockLayout.RootPane, p => p.Tabs.Contains(tab));
-        pane?.Tabs.Remove(tab);
+        // TODO: Show create collection dialog
     }
 
-    private T? FindTab<T>(Func<T, bool> predicate) where T : TabViewModel
+    [RelayCommand]
+    private void NewNodeTask()
     {
-        return FindTabInPane(DockLayout.RootPane, predicate);
+        var task = new NodeTaskViewModel(
+            new Core.Domain.NodeEditor.NodeGraph { Name = "New Task" },
+            _workspaceService);
+        AddTab(new NodeEditorTabViewModel(task));
     }
 
-    private T? FindTabInPane<T>(DockPaneViewModel pane, Func<T, bool> predicate) where T : TabViewModel
+    [RelayCommand]
+    private void SaveAll()
     {
-        foreach (var tab in pane.Tabs.OfType<T>())
-        {
-            if (predicate(tab)) return tab;
-        }
-        T? found = null;
-        if (pane.FirstChild != null) found = FindTabInPane(pane.FirstChild, predicate);
-        if (found != null) return found;
-        if (pane.SecondChild != null) found = FindTabInPane(pane.SecondChild, predicate);
-
-        return found;
+        // TODO: Implement Save All
+        System.Diagnostics.Debug.WriteLine("Save All requested");
     }
 
-    private DockPaneViewModel? FindPane(DockPaneViewModel current, Func<DockPaneViewModel, bool> predicate)
+    [RelayCommand]
+    private void CloseAllTabs()
     {
-        if (predicate(current)) return current;
-
-        DockPaneViewModel? found = null;
-
-        if (current.FirstChild != null) found = FindPane(current.FirstChild, predicate);
-        if (found != null) return found;
-        if (current.SecondChild != null) found = FindPane(current.SecondChild, predicate);
-
-        return found;
-    }
-
-    private int CountAllTabs()
-    {
-        int count = 0;
-        void Traverse(DockPaneViewModel p)
-        {
-            count += p.Tabs.Count;
-
-            if (p.FirstChild != null) Traverse(p.FirstChild);
-
-            if (p.SecondChild != null) Traverse(p.SecondChild);
-        }
-
-        Traverse(DockLayout.RootPane);
-
-        return count;
+        DockLayout.RootPane.Tabs.Clear();
     }
 
     public void OnTabDetached(TabViewModel tab)
     {
-        var window = new DetachedTabWindow(tab);
-        window.RedockRequested += (s, t) =>
-        {
-            AddTab(t);
-
-            if (s is DetachedTabWindow w) w.Close();
-        };
-        window.Show();
+        DockLayout.RootPane.Tabs.Remove(tab);
     }
 }

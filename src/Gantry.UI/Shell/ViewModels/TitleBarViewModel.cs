@@ -1,6 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Gantry.Core.Domain.Workspaces;
 using Gantry.Infrastructure.Services;
 using System;
 using System.Collections.Generic;
@@ -14,55 +13,34 @@ public partial class TitleBarViewModel : ObservableObject
 {
     private readonly WorkspaceService _workspaceService;
 
-    // Services for UI interactions (Dialogs)
-    public Func<Task<string?>>? CreateWorkspaceDialog { get; set; }
-    public Func<Task<string?>>? OpenFolderDialog { get; set; }
-    public Func<Task<string?>>? ImportGitDialog { get; set; }
+    // Commands injected from parent
+    public IRelayCommand? NewRequestCommand { get; set; }
+    public IRelayCommand? NewCollectionCommand { get; set; }
+    public IRelayCommand? NewNodeTaskCommand { get; set; }
+    public IRelayCommand? SaveAllCommand { get; set; }
+    public IRelayCommand? CloseAllTabsCommand { get; set; }
 
-    // Events for new menu actions
-    public event EventHandler? NewRequestRequested;
-    public event EventHandler? NewCollectionRequested;
-    public event EventHandler? NewNodeTaskRequested;
-    public event EventHandler? SaveAllRequested;
-    public event EventHandler? CloseAllTabsRequested;
+    // Dialog service
+    public Gantry.UI.Services.IDialogService? DialogService { get; set; }
+    
+    // Search ViewModel (Injected from MainWindow)
+    [ObservableProperty]
+    private SearchViewModel? _search;
 
-    // Event for search results
-    public event EventHandler<SearchResultItem>? SearchItemSelected;
-
-    public SearchViewModel? Search { get; private set; }
+    // Event to signal the View to open the Settings Window
+    public event EventHandler? OpenSettingsRequested;
 
     public Guid InstanceId { get; } = Guid.NewGuid();
 
     public TitleBarViewModel(WorkspaceService workspaceService)
     {
-        System.Diagnostics.Debug.WriteLine($"TitleBarViewModel Created: {InstanceId}");
         _workspaceService = workspaceService;
         _workspaceService.WorkspaceChanged += OnWorkspaceChanged;
-        
-        // Initialize Search with a placeholder to avoid binding errors
-        Search = new SearchViewModel(new SidebarViewModel(workspaceService));
     }
 
-    public void InitializeSearch(SidebarViewModel sidebar)
-    {
-        // Replace placeholder Search with the actual one using the real sidebar
-        if (Search != null)
-        {
-            Search.ItemSelected -= OnSearchItemSelected;
-        }
-        Search = new SearchViewModel(sidebar);
-        Search.ItemSelected += OnSearchItemSelected;
-    }
-
-    private void OnSearchItemSelected(object? sender, SearchResultItem item)
-    {
-        SearchItemSelected?.Invoke(this, item);
-    }
-
-    // Fallback for previewer
     public TitleBarViewModel() : this(new WorkspaceService()) { }
 
-    private void OnWorkspaceChanged(object? sender, Workspace? e)
+    private void OnWorkspaceChanged(object? sender, Core.Domain.Workspaces.Workspace? e)
     {
         OnPropertyChanged(nameof(RecentWorkspaces));
         OnPropertyChanged(nameof(CurrentWorkspace));
@@ -70,7 +48,7 @@ public partial class TitleBarViewModel : ObservableObject
 
     public IEnumerable<string> RecentWorkspaces => _workspaceService.RecentWorkspaces;
 
-    public Workspace? CurrentWorkspace
+    public Core.Domain.Workspaces.Workspace? CurrentWorkspace
     {
         get => _workspaceService.CurrentWorkspace;
         set
@@ -83,108 +61,50 @@ public partial class TitleBarViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void OpenSettings()
+    {
+        OpenSettingsRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    [RelayCommand]
     private async Task CreateWorkspace()
     {
-        if (CreateWorkspaceDialog == null) return;
-
-        var name = await CreateWorkspaceDialog.Invoke();
-        if (string.IsNullOrWhiteSpace(name)) return;
-
-        var defaultPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Gantry", "Workspaces");
-        var path = Path.Combine(defaultPath, name);
-
+        if (DialogService == null) return;
+        var path = await DialogService.ShowCreateWorkspaceDialog();
+        if (string.IsNullOrWhiteSpace(path)) return;
         if (!Directory.Exists(path)) Directory.CreateDirectory(path);
-
         _workspaceService.OpenWorkspace(path);
     }
 
     [RelayCommand]
     private async Task OpenFolder()
     {
-        if (OpenFolderDialog == null) return;
-
-        var path = await OpenFolderDialog.Invoke();
+        if (DialogService == null) return;
+        var path = await DialogService.ShowOpenFolderDialog();
         if (string.IsNullOrWhiteSpace(path)) return;
-
         _workspaceService.OpenWorkspace(path);
     }
 
     [RelayCommand]
     private async Task ImportFromGit()
     {
-        System.Diagnostics.Debug.WriteLine($"ImportFromGit command executed on Instance: {InstanceId}");
-        if (ImportGitDialog == null)
-        {
-            System.Diagnostics.Debug.WriteLine($"ImportGitDialog is null on Instance: {InstanceId}");
-            return;
-        }
-
-        var gitUrl = await ImportGitDialog.Invoke();
+        if (DialogService == null) return;
+        var gitUrl = await DialogService.ShowImportGitDialog();
         if (string.IsNullOrWhiteSpace(gitUrl)) return;
-
         await Task.Run(() =>
         {
             var repoName = Path.GetFileNameWithoutExtension(gitUrl.Split('/').Last());
             var defaultPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Gantry", "Workspaces");
             var targetPath = Path.Combine(defaultPath, repoName);
-
             if (!Directory.Exists(targetPath)) Directory.CreateDirectory(targetPath);
-
-            Avalonia.Threading.Dispatcher.UIThread.Post(() =>
-            {
-                _workspaceService.OpenWorkspace(targetPath);
-            });
+            Avalonia.Threading.Dispatcher.UIThread.Post(() => _workspaceService.OpenWorkspace(targetPath));
         });
     }
+
     [RelayCommand]
     private void NewWindow()
     {
         var processModule = System.Diagnostics.Process.GetCurrentProcess().MainModule;
-        if (processModule != null)
-        {
-            System.Diagnostics.Process.Start(processModule.FileName);
-        }
-    }
-    [RelayCommand]
-    private async Task OpenSettings()
-    {
-        var dialog = new Gantry.UI.Shell.Views.AppSettingsDialog();
-        if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
-        {
-            if (desktop.MainWindow != null)
-            {
-                await dialog.ShowDialog(desktop.MainWindow);
-            }
-        }
-    }
-
-    [RelayCommand]
-    private void NewRequest()
-    {
-        NewRequestRequested?.Invoke(this, EventArgs.Empty);
-    }
-
-    [RelayCommand]
-    private void NewCollection()
-    {
-        NewCollectionRequested?.Invoke(this, EventArgs.Empty);
-    }
-
-    [RelayCommand]
-    private void NewNodeTask()
-    {
-        NewNodeTaskRequested?.Invoke(this, EventArgs.Empty);
-    }
-
-    [RelayCommand]
-    private void SaveAll()
-    {
-        SaveAllRequested?.Invoke(this, EventArgs.Empty);
-    }
-
-    [RelayCommand]
-    private void CloseAllTabs()
-    {
-        CloseAllTabsRequested?.Invoke(this, EventArgs.Empty);
+        if (processModule != null) System.Diagnostics.Process.Start(processModule.FileName);
     }
 }

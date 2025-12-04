@@ -4,14 +4,16 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="clr-namespace:Gantry.UI.Shell.ViewModels"
         xmlns:rvm="clr-namespace:Gantry.UI.Features.Requests.ViewModels"
-        mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="300"
+        xmlns:requests="clr-namespace:Gantry.UI.Features.Requests.Views"
+        mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="500"
         x:Class="Gantry.UI.Shell.Views.AppSettingsDialog"
         x:DataType="vm:AppSettingsViewModel"
         x:Name="Root"
         Title="Gantry Settings"
-        Width="400" Height="300"
+        Width="600" Height="500"
         WindowStartupLocation="CenterOwner"
         CanResize="False">
+    
     <TabControl Margin="10">
         <TabItem Header="General">
             <StackPanel Margin="10" Spacing="20">
@@ -24,6 +26,11 @@
                 <Button Content="Close" HorizontalAlignment="Right" Click="OnCloseClick"/>
             </StackPanel>
         </TabItem>
+
+        <TabItem Header="Request Defaults">
+            <requests:RequestSettingsView DataContext="{Binding RequestSettings}" />
+        </TabItem>
+
         <TabItem Header="System Variables">
             <Grid RowDefinitions="Auto, *, Auto" Margin="10">
                 <TextBlock Text="Global System Variables (stored in %APPDATA%/Gantry/user.toml)" Margin="0,0,0,10" TextWrapping="Wrap" />

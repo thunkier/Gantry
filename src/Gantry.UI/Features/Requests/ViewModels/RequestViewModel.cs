@@ -346,30 +346,12 @@ public partial class RequestViewModel : TabViewModel
     }
 
     [RelayCommand]
-    private async Task OpenSettings()
-    {
-        var dialog = new Gantry.UI.Features.Requests.Views.RequestSettingsDialog
-        {
-            DataContext = this // Bind directly to this VM so changes apply immediately
-        };
-
-        // Find the main window to set owner
-        if (Avalonia.Application.Current?.ApplicationLifetime is Avalonia.Controls.ApplicationLifetimes.IClassicDesktopStyleApplicationLifetime desktop)
-        {
-            if (desktop.MainWindow != null)
-            {
-                await dialog.ShowDialog(desktop.MainWindow);
-            }
-        }
-    }
-
-    [RelayCommand]
     private async Task SaveResponse()
     {
         if (Response == null || string.IsNullOrEmpty(Response.Body)) return;
 
         // Determine directory
-        string directory;
+        string directory = string.Empty;
         if (!string.IsNullOrEmpty(_model.Path) && _model.Path.EndsWith(".req"))
         {
             directory = _model.Path;
@@ -380,12 +362,6 @@ public partial class RequestViewModel : TabViewModel
         }
         else
         {
-            // Fallback if path is missing (e.g. new request not saved)
-            // We should probably prompt or save to a temp location, but for now let's try to find parent
-            directory = ""; 
-            // If we can't find a path, we can't save to the "request's directory".
-            // Maybe we should just return or show an error?
-            // Or fallback to the collection path?
             var parent = _model.Parent;
             while (parent != null)
             {
@@ -396,9 +372,12 @@ public partial class RequestViewModel : TabViewModel
                 }
                 parent = parent.Parent;
             }
+            // If still empty, use a default fallback
+            if (string.IsNullOrEmpty(directory))
+            {
+                 directory = System.IO.Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "Gantry", "SavedResponses");
+            }
         }
-
-        if (string.IsNullOrEmpty(directory)) return; // Cannot save
 
         if (!System.IO.Directory.Exists(directory)) System.IO.Directory.CreateDirectory(directory);
 
@@ -455,9 +434,6 @@ public partial class RequestViewModel : TabViewModel
     }
     private void AddAutoHeader(string key, string value)
     {
-        // Only add if not already present (user might have overridden it, though auto headers are usually separate)
-        // Postman shows them as separate, uneditable (or editable if you override). 
-        // For now, let's just add them as visual indicators.
         if (!Headers.Any(h => h.Key.Equals(key, StringComparison.OrdinalIgnoreCase)))
         {
             Headers.Add(new HeaderViewModel(new HeaderItem { Key = key, Value = value })

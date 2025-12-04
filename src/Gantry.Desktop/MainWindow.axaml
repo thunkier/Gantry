@@ -38,13 +38,15 @@
             <shell:Sidebar Grid.Column="0" DataContext="{Binding Sidebar}" />
             
             <Grid Grid.Column="1">
-                <docking:DockableWorkspace x:Name="DockableWorkspace"
-                                            DataContext="{Binding DockLayout}"
-                                            TabDetachRequested="OnTabDetachRequested" 
-                                            IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CurrentWorkspace, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                <Panel IsVisible="{Binding CurrentWorkspace, Converter={x:Static ObjectConverters.IsNotNull}}">
+                    <docking:DockableWorkspace x:Name="DockableWorkspace"
+                                               DataContext="{Binding DockLayout}"
+                                               TabDetachRequested="OnTabDetachRequested" />
+                </Panel>
                 
-                <workspace:WelcomeView DataContext="{Binding Welcome}"
-                                       IsVisible="{Binding $parent[Window].((vm:MainWindowViewModel)DataContext).CurrentWorkspace, Converter={x:Static ObjectConverters.IsNull}}" />
+                <Panel IsVisible="{Binding CurrentWorkspace, Converter={x:Static ObjectConverters.IsNull}}">
+                    <workspace:WelcomeView DataContext="{Binding Welcome}" />
+                </Panel>
             </Grid>
         </Grid>
     </Grid>

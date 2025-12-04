@@ -1,5 +1,8 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Media.Imaging;
+using Avalonia.Threading; // Required for Dispatcher
 using Avalonia.VisualTree;
 using System;
 using System.Collections.ObjectModel;
@@ -7,25 +10,26 @@ using Gantry.UI.Shell.ViewModels;
 
 namespace Gantry.UI.Shell.Docking;
 
-/// <summary>
-/// Handles drag-and-drop operations for tab reordering and detachment.
-/// </summary>
 public class TabDragHandler
 {
     private const double DragThreshold = 5;
-    private const double DetachThresholdY = 50; // Vertical distance to trigger detachment
-
-    private TabViewModel? _draggedTab;
-    private int _draggedIndex = -1;
-    private Avalonia.Point _dragStartPosition;
-    private bool _isDragging;
+    
     private readonly ObservableCollection<TabViewModel> _tabs;
     private readonly ListBox _listBox;
-    private Control? _draggedElement;
+    
+    private TabViewModel? _draggedTab;
+    private Control? _draggedContainer; // The visual tab item
+    private DragGhostWindow? _ghostWindow;
+    private Visual? _rootVisual; 
+    
+    private Point _dragStartPosition;
+    private Point _ghostOffset;
+    private bool _isDragging;
+    
+    // Throttle moves to prevent layout thrashing (Lag Fix)
+    private DateTime _lastMoveTime = DateTime.MinValue;
+    private const int MoveCooldownMs = 75; 
 
-    /// <summary>
-    /// Event raised when a tab should be detached to a new window.
-    /// </summary>
     public event EventHandler<TabViewModel>? TabDetachRequested;
 
     public TabDragHandler(ObservableCollection<TabViewModel> tabs, ListBox listBox)
@@ -36,156 +40,198 @@ public class TabDragHandler
 
     public void OnPointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (sender is not Control control)
+        if (sender is not Control sourceControl || sourceControl.DataContext is not TabViewModel tab)
             return;
 
-        var point = e.GetCurrentPoint(control);
+        var point = e.GetCurrentPoint(_listBox); // Get point relative to ListBox
+        
         if (point.Properties.IsLeftButtonPressed)
         {
-            _draggedElement = control;
+            // 1. Identify what we are dragging
+            _draggedTab = tab;
+            _draggedContainer = _listBox.ContainerFromIndex(_tabs.IndexOf(tab)) as Control ?? sourceControl;
+            
             _dragStartPosition = point.Position;
+            
+            // Calculate offset relative to the ItemContainer, not the clicked element
+            // This ensures the ghost snaps to the top-left of the tab properly
+            var itemPos = e.GetPosition(_draggedContainer);
+            _ghostOffset = itemPos;
+            
+            _rootVisual = _listBox.GetVisualRoot() as Visual;
             _isDragging = false;
-
-            // Capture pointer to ensure we get events even if mouse leaves the control
-            e.Pointer.Capture(control);
-
-            // Find the tab being dragged
-            if (control.DataContext is TabViewModel tab)
-            {
-                _draggedTab = tab;
-                _draggedIndex = _tabs.IndexOf(tab);
-            }
+            
+            // 2. CRITICAL FIX: Capture the LISTBOX, not the Tab Item.
+            // The Tab Item might be destroyed/recreated during reordering.
+            // The ListBox stays alive.
+            e.Pointer.Capture(_listBox);
         }
     }
 
     public void OnPointerMoved(object? sender, PointerEventArgs e)
     {
-        if (_draggedTab == null || _draggedElement == null)
-            return;
+        if (_draggedTab == null) return;
 
-        var point = e.GetCurrentPoint(_draggedElement);
-        var delta = point.Position - _dragStartPosition;
-        var distance = Math.Sqrt(delta.X * delta.X + delta.Y * delta.Y);
+        var currentPos = e.GetPosition(_listBox);
 
-        // Start dragging if moved more than threshold
-        if (!_isDragging && distance > DragThreshold)
+        // 1. Detect Drag Start
+        if (!_isDragging)
         {
-            _isDragging = true;
-            // Reduce opacity to indicate dragging
-            _draggedElement.Opacity = 0.6;
+            var delta = currentPos - _dragStartPosition;
+            if (Math.Sqrt(delta.X * delta.X + delta.Y * delta.Y) > DragThreshold)
+            {
+                StartDrag();
+            }
         }
 
+        // 2. Perform Drag
         if (_isDragging)
         {
-            // Check if dragged vertically beyond detachment threshold
-            if (Math.Abs(delta.Y) > DetachThresholdY)
-            {
-                // Request tab detachment
-                TabDetachRequested?.Invoke(this, _draggedTab);
-
-                // Remove from current pane
-                if (_draggedIndex >= 0 && _draggedIndex < _tabs.Count)
-                {
-                    _tabs.RemoveAt(_draggedIndex);
-                }
-
-                ResetDrag();
-                return;
-            }
-
-            // Update cursor
-            _listBox.Cursor = new Cursor(StandardCursorType.Hand);
-
-            // Check for drag to reorder
-            var position = e.GetPosition(_listBox);
-            UpdateDropTarget(position);
+            UpdateGhostPosition(e);
+            HandleReordering(currentPos);
         }
     }
 
     public void OnPointerReleased(object? sender, PointerReleasedEventArgs e)
     {
-        if (_draggedElement != null)
-        {
-            e.Pointer.Capture(null);
-        }
+        // 1. Release capture from the ListBox
+        e.Pointer.Capture(null);
 
-        if (!_isDragging || _draggedTab == null)
+        // 2. Handle Drop Logic
+        if (_isDragging && _draggedTab != null)
         {
-            ResetDrag();
-            return;
-        }
-
-        // Find drop index based on pointer position
-        var position = e.GetPosition(_listBox);
-        int dropIndex = GetDropIndex(position);
-
-        if (_draggedIndex >= 0 && dropIndex >= 0 && _draggedIndex != dropIndex)
-        {
-            // Adjust drop index if we're moving the tab forward
-            // (removing it first shifts all subsequent indices down by 1)
-            int adjustedDropIndex = dropIndex;
-            if (dropIndex > _draggedIndex)
+            if (IsPointerOutsideListBox(e.GetPosition(_listBox)))
             {
-                adjustedDropIndex--;
+                // Detach
+                TabDetachRequested?.Invoke(this, _draggedTab);
+                _tabs.Remove(_draggedTab);
             }
-
-            // Reorder tabs
-            _tabs.Move(_draggedIndex, adjustedDropIndex);
         }
 
-        ResetDrag();
+        StopDrag();
     }
 
-    private void UpdateDropTarget(Avalonia.Point position)
+    private void StartDrag()
     {
-        // Visual feedback for drop position could be added here
+        if (_draggedContainer == null) return;
+
+        _isDragging = true;
+
+        // Snapshot
+        try 
+        {
+            var pixelSize = new PixelSize((int)_draggedContainer.Bounds.Width, (int)_draggedContainer.Bounds.Height);
+            if (pixelSize.Width > 0 && pixelSize.Height > 0)
+            {
+                var bitmap = new RenderTargetBitmap(pixelSize, new Vector(96, 96));
+                bitmap.Render(_draggedContainer);
+                _ghostWindow = new DragGhostWindow(bitmap, _draggedContainer.Bounds.Width, _draggedContainer.Bounds.Height);
+                _ghostWindow.Show();
+            }
+        }
+        catch { /* Handle edge case where size is 0 or bitmap fails */ }
+
+        // Hide real tab
+        _draggedContainer.Opacity = 0.0;
     }
 
-    private int GetDropIndex(Avalonia.Point position)
+    private void StopDrag()
     {
-        // Find which tab the pointer is over
+        _ghostWindow?.Close();
+        _ghostWindow = null;
+
+        // Restore opacity if the container still exists
+        if (_draggedContainer != null)
+        {
+            _draggedContainer.Opacity = 1.0;
+        }
+        // Also restore opacity of the tab at the current index (in case container ref changed)
+        if (_draggedTab != null)
+        {
+             var index = _tabs.IndexOf(_draggedTab);
+             if (index >= 0)
+             {
+                 var container = _listBox.ContainerFromIndex(index) as Control;
+                 if (container != null) container.Opacity = 1.0;
+             }
+        }
+
+        _listBox.Cursor = Cursor.Default;
+        _draggedTab = null;
+        _draggedContainer = null;
+        _rootVisual = null;
+        _isDragging = false;
+    }
+
+    private void UpdateGhostPosition(PointerEventArgs e)
+    {
+        if (_ghostWindow == null || _rootVisual == null) return;
+
+        var rootPoint = e.GetPosition(_rootVisual);
+        var screenPoint = _rootVisual.PointToScreen(rootPoint);
+
+        // Add 1px offset to ensure mouse isn't hovering the window pixel-perfectly
+        // which helps preventing input blocking on some OS configurations
+        var x = screenPoint.X - (int)_ghostOffset.X + 2;
+        var y = screenPoint.Y - (int)_ghostOffset.Y + 2;
+
+        _ghostWindow.Position = new PixelPoint(x, y);
+    }
+
+    private void HandleReordering(Point position)
+    {
+        if (IsPointerOutsideListBox(position)) return;
+
+        // Throttling to prevent lag
+        if ((DateTime.Now - _lastMoveTime).TotalMilliseconds < MoveCooldownMs) return;
+
+        int fromIndex = _tabs.IndexOf(_draggedTab!);
+        int toIndex = GetDropIndex(position);
+
+        if (fromIndex >= 0 && toIndex >= 0 && fromIndex != toIndex)
+        {
+            // Restore opacity of the "old" slot immediately before moving
+            if (_draggedContainer != null) _draggedContainer.Opacity = 1.0;
+
+            _tabs.Move(fromIndex, toIndex);
+            _lastMoveTime = DateTime.Now;
+
+            // Wait for UI to update, then hide the "new" slot
+            Dispatcher.UIThread.Post(() => 
+            {
+                var newContainer = _listBox.ContainerFromIndex(toIndex) as Control;
+                if (newContainer != null)
+                {
+                    _draggedContainer = newContainer;
+                    _draggedContainer.Opacity = 0.0;
+                }
+            }, DispatcherPriority.Input);
+        }
+    }
+
+    private bool IsPointerOutsideListBox(Point p)
+    {
+        var bounds = _listBox.Bounds;
+        // Check if we are physically outside the bounds of the listbox area
+        // Allow a small vertical buffer (25px) for "sloppy" dragging
+        bool insideX = p.X >= 0 && p.X <= bounds.Width;
+        bool insideY = p.Y >= -10 && p.Y <= bounds.Height + 25; 
+        return !(insideX && insideY);
+    }
+
+    private int GetDropIndex(Point position)
+    {
         for (int i = 0; i < _listBox.ItemCount; i++)
         {
-            var container = _listBox.ContainerFromIndex(i);
-            if (container is Control itemControl)
+            if (_listBox.ContainerFromIndex(i) is Control container)
             {
-                var bounds = itemControl.Bounds;
-                
-                // Check if pointer is within the horizontal bounds of the item
-                // We use a slightly wider hit test to make it easier to drop between items
-                if (position.X >= bounds.X && position.X <= bounds.X + bounds.Width)
+                var bounds = container.Bounds;
+                if (position.X < bounds.X + (bounds.Width / 2))
                 {
-                    var midPoint = bounds.X + bounds.Width / 2;
-                    // If on the left half, insert at current index (before item)
-                    // If on the right half, insert at next index (after item)
-                    return position.X < midPoint ? i : i + 1;
+                    return i;
                 }
             }
         }
-
-        // Handle edge cases
-        if (_listBox.ItemCount > 0)
-        {
-            var first = _listBox.ContainerFromIndex(0) as Control;
-            var last = _listBox.ContainerFromIndex(_listBox.ItemCount - 1) as Control;
-
-            if (first != null && position.X < first.Bounds.X) return 0;
-            if (last != null && position.X > last.Bounds.X + last.Bounds.Width) return _listBox.ItemCount;
-        }
-
-        return _draggedIndex; // No change if not found
-    }
-
-    private void ResetDrag()
-    {
-        if (_draggedElement != null)
-        {
-            _draggedElement.Opacity = 1.0;
-        }
-        _listBox.Cursor = Cursor.Default;
-        _draggedTab = null;
-        _draggedIndex = -1;
-        _draggedElement = null;
-        _isDragging = false;
+        return _tabs.Count - 1;
     }
 }

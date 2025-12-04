@@ -13,8 +13,15 @@ public partial class AppSettingsViewModel : ObservableObject
 
     public ObservableCollection<VariableViewModel> SystemVariables { get; } = new();
 
+    // 1. Add a property to hold the Request Settings
+    public RequestViewModel RequestSettings { get; }
+
     public AppSettingsViewModel()
     {
+        // 2. Initialize the Request Settings
+        // In a real app, you might load these defaults from a service/file
+        RequestSettings = new RequestViewModel(); 
+
         _systemVariableService = new SystemVariableService();
         foreach (var v in _systemVariableService.Variables)
         {
